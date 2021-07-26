@@ -1,5 +1,5 @@
-# AccesstypeAdyen
-Adyen [online payment](https://docs.adyen.com/checkout) integration for Quintype
+# Adyen for AccessType
+Adyen [online payment](https://docs.adyen.com/checkout) integration for AccessType.
 
 ## Installation
 Add this line to your application's Gemfile:
