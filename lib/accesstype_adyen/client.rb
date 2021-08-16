@@ -8,9 +8,10 @@ module AccesstypeAdyen
     # Define routes which will be used in this class
     ROUTES = [
       { name: 'capture_payment', path: '/v67/payments/:payment_id/captures', api: :checkout },
-      { name: 'create_subscription', path: '/v67/payments', api: :checkout },
       { name: 'refund_payment', path: '/v67/payments/:payment_id/refunds', api: :checkout },
-      { name: 'cancel_recurring_subscription', path: '/Recurring/v49/disable', api: :pal }
+      { name: 'charge_recurring_subscription', path: '/v67/payments', api: :checkout },
+      { name: 'cancel_recurring_subscription', path: '/Recurring/v49/disable', api: :pal },
+      { name: 'validate_credentials', path: '/v67/paymentMethods', api: :checkout }
     ].freeze
 
     # The frequency with which a shopper should be charged.
@@ -59,12 +60,31 @@ module AccesstypeAdyen
       )
     end
 
+    def charge_recurring_subscription(payment_token, payment_amount, payment_currency, subscription_id, subscriber_id, merchant_account)
+      fetch_route = find_route(__method__.to_s)
+      requested_path = fetch_route[:path]
+
+      client.post(
+        requested_path,
+        fetch_route[:api],
+        {
+          'amount' => { 'currency' => payment_currency, 'amount' => payment_amount },
+          'paymentMethod' => { 'type' => 'scheme', 'storedPaymentMethodId' => payment_token },
+          'reference' => subscription_id,
+          'shopperInteraction' => 'ContAuth',
+          'recurringProcessingModel' => 'Subscription',
+          'shopperReference' => subscriber_id,
+          'merchantAccount' => merchant_account
+        }
+      )
+    end
+
     # If recurringDetailReference is not provided,
     # the whole recurring contract of the shopperReference
     # will be disabled, which includes all recurring details.
     #
     # See more: https://docs.adyen.com/api-explorer/#/Recurring/latest/post/disable__section_reqParams
-    def cancel_recurring_subscription(subscription_id, merchant_account)
+    def cancel_recurring_subscription(subscriber_id, merchant_account)
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
 
@@ -73,7 +93,23 @@ module AccesstypeAdyen
         fetch_route[:api],
         {
           'contract' => 'RECURRING',
-          'shopperReference' => subscription_id,
+          'shopperReference' => subscriber_id,
+          'merchantAccount' => merchant_account
+        }
+      )
+    end
+
+    # This will just use paymentMethods API endpoint
+    # to test that will will return 200 with provided
+    # credentials and merchantAccount
+    def validate_credentials(merchant_account)
+      fetch_route = find_route(__method__.to_s)
+      requested_path = fetch_route[:path]
+
+      client.post(
+        requested_path,
+        fetch_route[:api],
+        {
           'merchantAccount' => merchant_account
         }
       )

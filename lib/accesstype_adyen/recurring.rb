@@ -6,8 +6,8 @@ module AccesstypeAdyen
     attr_accessor :api_key, :merchant_account, :environment
 
     def initialize(credentials:, environment:)
-      @api_key = credentials['api_key']
-      @merchant_account = credentials['merchant_account']
+      @api_key = credentials[:api_key]
+      @merchant_account = credentials[:merchant_account]
       @environment = environment || 'live'
     end
 
@@ -19,6 +19,57 @@ module AccesstypeAdyen
       nil
     end
 
+    # This method will return true if the class has charge method.
+    # It will return false if the class hasn't charge method.
+    #
+    # Returns: boolean
+    def charge?
+      true
+    end
+
+    # This is not a mandatory method. However, This method needs to be created in payment
+    # adapter gem when we need to call API for making payment based on the card details.
+    #
+    # Expected params: payload, subscription_attempt
+    # Returns: Payment result object
+    def charge(payload:, subscription_plan:, subscriber:)
+      response = Api.charge_recurring_subscription(
+        credentials,
+        payload,
+        subscription_plan,
+        subscriber
+      )
+
+      if response.code.to_i == 200
+        if VALID_STATUSES.include?(response['resultCode'].to_s)
+          payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
+          PaymentResult.success(
+            AccesstypeAdyen::PAYMENT_GATEWAY,
+            payment_token: payload[:payment_token],
+            payment_gateway_fee: !payment_fee.nil? ? payment_fee['amount']['value'] : nil,
+            payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
+            amount_currency: response['amount']['currency'].to_s,
+            amount_cents: response['amount']['value'],
+            status: response['resultCode']
+          )
+        else
+          error_response(
+            response['refusalReasonCode'],
+            response['refusalReason'],
+            response['resultCode'],
+            payload[:payment_token]
+          )
+        end
+      else
+        error_response(
+          response['errorCode'],
+          response['message'],
+          response['status'],
+          payload[:payment_token]
+        )
+      end
+    end
+
     # Used for fetching subscription and verifying
     # if the subscription is valid, but that is not
     # possible with Adyen. Instead, payment is marked
@@ -26,7 +77,7 @@ module AccesstypeAdyen
     # response before calling this method.
     #
     # Expected params: payment object with payment_token
-    # Returns: Payment Result object
+    # Returns: Payment result object
     def after_charge(payment:)
       PaymentResult.success(
         AccesstypeAdyen::PAYMENT_TYPE_RECURRING,
@@ -40,10 +91,10 @@ module AccesstypeAdyen
     # If the cancellation is successful, the method will return a success struct with success = true
     # Else the method will return an error struct, with success = false
     #
-    # Expected params: payment object with payment_token
-    # Returns: Payment Result object
+    # Expected params: payment object with subscriber_id
+    # Returns: Payment result object
     def cancel_subscription(payment:)
-      response = Api.cancel_recurring_subscription(credentials, payment[:payment_token])
+      response = Api.cancel_recurring_subscription(credentials, payment[:subscriber_id])
 
       if response.code == 200 && VALID_SUBSCRIPTION_CANCEL_STATUSES.include?(response.to_s)
         PaymentResult.success(
@@ -52,7 +103,12 @@ module AccesstypeAdyen
           status: response['status']
         )
       else
-        error_response(response['errorCode'], response['message'], response['status'], payment[:payment_token])
+        error_response(
+          response['errorCode'],
+          response['message'],
+          response['status'],
+          payment[:payment_token]
+        )
       end
     end
 

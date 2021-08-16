@@ -6,8 +6,8 @@ module AccesstypeAdyen
     attr_accessor :api_key, :merchant_account, :environment
 
     def initialize(credentials:, environment:)
-      @api_key = credentials['api_key']
-      @merchant_account = credentials['merchant_account']
+      @api_key = credentials[:api_key]
+      @merchant_account = credentials[:merchant_account]
       @environment = environment || 'live'
     end
 
@@ -57,7 +57,7 @@ module AccesstypeAdyen
       )
 
       if response.code.to_i == 200
-        payment_fee = !response['splits'].nil? ? response['splits'].find_all { |split| split['type'] == 'PaymentFee' }.first : nil
+        payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
         PaymentResult.success(
           AccesstypeAdyen::PAYMENT_GATEWAY,
           payment_token: payment[:payment_token],
