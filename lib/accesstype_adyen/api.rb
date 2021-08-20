@@ -65,10 +65,6 @@ module AccesstypeAdyen
           credentials[:merchant_account]
         )
       end
-
-      def webhook_signature_valid?(signature, body, secret)
-        signature == OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha256'), secret, body)
-      end
     end
   end
 end
