@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir['{app,config,db,lib}/**/*', 'MIT-LICENSE', 'Rakefile', 'README.md']
 
-  spec.add_development_dependency 'rspec', '~> 3.4'
-  spec.add_development_dependency 'webmock', '~> 2.1'
-  spec.add_dependency 'httparty', '~> 0.13.7'
+  spec.add_development_dependency 'rspec'
+  spec.add_development_dependency 'webmock'
+  spec.add_dependency 'httparty'
 end
