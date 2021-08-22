@@ -14,7 +14,7 @@ module AccesstypeAdyen
   }.freeze
 
   # https://docs.adyen.com/online-payments/payment-result-codes
-  VALID_STATUSES = ['Authorised'].freeze
+  VALID_STATUSES = ['Authorised', 'RedirectShopper'].freeze
   VALID_SUBSCRIPTION_CANCEL_STATUSES = ['[detail-successfully-disabled]', '[all-details-successfully-disabled]'].freeze
 
   PAYMENT_GATEWAY = 'adyen'

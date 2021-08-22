@@ -30,6 +30,19 @@ module AccesstypeAdyen
         )
       end
 
+      # Used for charging the onetime payment.
+      def charge_onetime(credentials, payload)
+        Client.new(
+          AccesstypeAdyen::CONFIG[credentials[:environment].to_sym],
+          credentials
+        ).charge_onetime(
+          payload[:payment_token],
+          payload[:amount_cents],
+          payload[:amount_currency].to_s,
+          credentials[:merchant_account]
+        )
+      end
+
       # Used for charging the subscription payment.
       def charge_recurring_subscription(credentials, payload, subscription_plan, subscriber)
         Client.new(
@@ -64,6 +77,14 @@ module AccesstypeAdyen
         ).validate_credentials(
           credentials[:merchant_account]
         )
+      end
+
+      # Used to send payment details to payment gateway after redirection was needed
+      def payment_details(credentials, details)
+        Client.new(
+          AccesstypeAdyen::CONFIG[credentials[:environment].to_sym],
+          credentials
+        ).payment_details(details)
       end
     end
   end

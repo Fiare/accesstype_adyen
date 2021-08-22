@@ -37,9 +37,36 @@ module AccesstypeAdyen
     # Returns: Payment Result object
     def after_charge(payment:, is_payment_details_required: false, opts: nil)
       if is_payment_details_required
-        # TODO
-        # Call the API with opts and return the response
-        # based on /payments/details API response.
+        response = Api.payment_details(credentials, opts)
+
+        if response.code.to_i == 200
+          if VALID_STATUSES.include?(response['resultCode'].to_s)
+            payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
+            PaymentResult.success(
+              AccesstypeAdyen::PAYMENT_GATEWAY,
+              payment_token: payload[:payment_token],
+              payment_gateway_fee: !payment_fee.nil? ? payment_fee['amount']['value'] : nil,
+              payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
+              amount_currency: response['amount']['currency'].to_s,
+              amount_cents: response['amount']['value'],
+              status: response['resultCode']
+            )
+          else
+            error_response(
+              response['refusalReasonCode'],
+              response['refusalReason'],
+              response['resultCode'],
+              payload[:payment_token]
+            )
+          end
+        else
+          error_response(
+            response['errorCode'],
+            response['message'],
+            response['status'],
+            payload[:payment_token]
+          )
+        end
       else
         PaymentResult.success(
           AccesstypeAdyen::PAYMENT_GATEWAY,
@@ -103,8 +130,48 @@ module AccesstypeAdyen
       end
     end
 
-    def initiate_charge
-      # TODO
+    # This method will initiate the payment and return either
+    # "Authorised" or "RedirectShopper" as a status, depending
+    # if redirect is needed or not. Redirect response and sending
+    # the details to the payment gateway are handled in the
+    # after_charge method
+    #
+    # Expected params: payload
+    # Returns: Payment result object
+    def initiate_charge(payload:)
+      response = Api.charge_onetime(
+        credentials,
+        payload
+      )
+
+      if response.code.to_i == 200
+        if VALID_STATUSES.include?(response['resultCode'].to_s)
+          payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
+          PaymentResult.success(
+            AccesstypeAdyen::PAYMENT_GATEWAY,
+            payment_token: payload[:payment_token],
+            payment_gateway_fee: !payment_fee.nil? ? payment_fee['amount']['value'] : nil,
+            payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
+            amount_currency: !response['amount'].nil? ? response['amount']['currency'].to_s : nil,
+            amount_cents: !response['amount'].nil? ? response['amount']['value'] : nil,
+            status: response['resultCode']
+          )
+        else
+          error_response(
+            response['refusalReasonCode'],
+            response['refusalReason'],
+            response['resultCode'],
+            payload[:payment_token]
+          )
+        end
+      else
+        error_response(
+          response['errorCode'],
+          response['message'],
+          response['status'],
+          payload[:payment_token]
+        )
+      end
     end
 
     def error_response(code, description, status, payload = nil)

@@ -11,7 +11,9 @@ module AccesstypeAdyen
       { name: 'refund_payment', path: '/v67/payments/:payment_id/refunds', api: :checkout },
       { name: 'charge_recurring_subscription', path: '/v67/payments', api: :checkout },
       { name: 'cancel_recurring_subscription', path: '/Recurring/v49/disable', api: :pal },
-      { name: 'validate_credentials', path: '/v67/paymentMethods', api: :checkout }
+      { name: 'validate_credentials', path: '/v67/paymentMethods', api: :checkout },
+      { name: 'charge_onetime', path: '/v67/payments', api: :checkout },
+      { name: 'payment_details', path: '/v67/payments/details', api: :checkout }
     ].freeze
 
     # The frequency with which a shopper should be charged.
@@ -55,6 +57,21 @@ module AccesstypeAdyen
         fetch_route[:api],
         {
           'amount' => { 'currency' => refund_currency, 'amount' => refund_amount },
+          'merchantAccount' => merchant_account
+        }
+      )
+    end
+
+    def charge_onetime(payment_token, payment_amount, payment_currency, merchant_account)
+      fetch_route = find_route(__method__.to_s)
+      requested_path = fetch_route[:path]
+
+      client.post(
+        requested_path,
+        fetch_route[:api],
+        {
+          'amount' => { 'currency' => payment_currency, 'amount' => payment_amount },
+          'paymentMethod' => { 'type' => 'scheme', 'storedPaymentMethodId' => payment_token },
           'merchantAccount' => merchant_account
         }
       )
@@ -111,6 +128,25 @@ module AccesstypeAdyen
         fetch_route[:api],
         {
           'merchantAccount' => merchant_account
+        }
+      )
+    end
+
+    # Submits details for a payment created using /payments. This step is
+    # only needed when no final state has been reached on the /payments
+    # request, for example when the shopper was redirected to another
+    # page to complete the payment.
+    #
+    # See more: https://docs.adyen.com/api-explorer/#/CheckoutService/v67/post/payments/details
+    def payment_details(details)
+      fetch_route = find_route(__method__.to_s)
+      requested_path = fetch_route[:path]
+
+      client.post(
+        requested_path,
+        fetch_route[:api],
+        {
+          'details' => details
         }
       )
     end

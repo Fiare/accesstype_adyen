@@ -23,93 +23,119 @@ describe AccesstypeAdyen::Recurring do
     end
   end
 
-  # describe '.charge' do
-  #   it 'returns success payment result' do
-  #     stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
-  #       .with(headers: { 'Content-Type' => 'application/json' })
-  #       .to_return(
-  #         status: 200,
-  #         body: '{
-  #           "additionalData": {
-  #             "recurringProcessingModel": "Subscription",
-  #             "adjustAuthorisationData": "some_auth_data"
-  #           },
-  #           "pspReference": "863628593129097A",
-  #           "resultCode": "Authorised",
-  #           "amount": {
-  #             "currency": "EUR",
-  #             "value": 6700
-  #           },
-  #           "merchantReference": "some_order_number"
-  #         }',
-  #         headers: { 'Content-Type' => 'application/json' }
-  #       )
-  #
-  #     payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
-  #     subscription_plan = { id: 1002 }
-  #     subscriber = { id: 2003 }
-  #
-  #     result = recurring_payment.charge(payload: payload, subscription_plan: subscription_plan, subscriber: subscriber)
-  #
-  #     expect(result.success).to eq true
-  #     expect(result.amount_cents).to eq 6700
-  #     expect(result.payment_token).to eq 'some_payment_token'
-  #     expect(result.amount_currency).to eq 'EUR'
-  #   end
-  #
-  #   it 'returns error payment result with resultCode and refusalReason' do
-  #     stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
-  #       .with(headers: { 'Content-Type' => 'application/json' })
-  #       .to_return(
-  #         status: 200,
-  #         body: '{
-  #           "pspReference": "883628594626593C",
-  #           "refusalReason": "Expired Card",
-  #           "resultCode": "Refused",
-  #           "refusalReasonCode": "6",
-  #           "merchantReference": "some_order_number"
-  #         }',
-  #         headers: { 'Content-Type' => 'application/json' }
-  #       )
-  #
-  #     payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
-  #     subscription_plan = {}
-  #     subscriber = {}
-  #
-  #     result = recurring_payment.charge(payload: payload, subscription_plan: subscription_plan, subscriber: subscriber)
-  #
-  #     expect(result.success).to eq false
-  #     expect(result.code).to eq '6'
-  #     expect(result.message).to eq 'Received 6 - Expired Card'
-  #     expect(result.status).to eq 'Refused'
-  #     expect(result.payload).to eq 'some_payment_token'
-  #   end
-  #
-  #   it 'returns error payment result with errorCode and message' do
-  #     stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
-  #       .with(headers: { 'Content-Type' => 'application/json' })
-  #       .to_return(
-  #         status: 422,
-  #         body: '{"status": 422, "errorCode": "100", "message": "Some error message"}',
-  #         headers: { 'Content-Type' => 'application/json' }
-  #       )
-  #
-  #     payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
-  #     subscription_plan = {}
-  #     subscriber = {}
-  #
-  #     result = recurring_payment.charge(payload: payload, subscription_plan: subscription_plan, subscriber: subscriber)
-  #
-  #     expect(result.success).to eq false
-  #     expect(result.code).to eq '100'
-  #     expect(result.message).to eq 'Received 100 - Some error message'
-  #     expect(result.status).to eq 422
-  #     expect(result.payload).to eq 'some_payment_token'
-  #   end
-  # end
+  describe '.initiate_charge' do
+    it 'returns payment result with success' do
+      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
+        .with(headers: { 'Content-Type' => 'application/json' })
+        .to_return(
+          status: 200,
+          body: '{
+                "additionalData": {
+                  "recurringProcessingModel": "Subscription",
+                  "adjustAuthorisationData": "some_auth_data"
+                },
+                "pspReference": "863628593129097A",
+                "resultCode": "Authorised",
+                "amount": {
+                  "currency": "EUR",
+                  "value": 6700
+                },
+                "merchantReference": "some_order_number"
+              }',
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
+      subscription_plan = { id: 1002 }
+      subscriber = { id: 2003 }
+
+      result = recurring_payment.initiate_charge(payload: payload, subscription_plan: subscription_plan, subscriber: subscriber)
+
+      expect(result.success).to eq true
+      expect(result.amount_cents).to eq 6700
+      expect(result.payment_token).to eq 'some_payment_token'
+      expect(result.amount_currency).to eq 'EUR'
+    end
+    it 'returns payment result with redirect' do
+      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
+        .with(headers: { 'Content-Type' => 'application/json' })
+        .to_return(
+          status: 200,
+          body: '{
+            "resultCode": "RedirectShopper",
+            "action": {
+              "paymentMethodType": "ideal",
+              "url": "https://checkoutshopper-test.adyen.com/checkoutshopper/checkoutPaymentRedirect?redirectData=some_redirect_data",
+              "method": "GET",
+              "type": "redirect"
+            }
+          }',
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
+      subscription_plan = { id: 1002 }
+      subscriber = { id: 2003 }
+
+      result = recurring_payment.initiate_charge(payload: payload, subscription_plan: subscription_plan, subscriber: subscriber)
+
+      expect(result.success).to eq true
+      expect(result.status).to eq 'RedirectShopper'
+      expect(result.payment_token).to eq 'some_payment_token'
+    end
+    it 'returns error payment result with resultCode and refusalReason' do
+      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
+        .with(headers: { 'Content-Type' => 'application/json' })
+        .to_return(
+          status: 200,
+          body: '{
+              "pspReference": "883628594626593C",
+              "refusalReason": "Expired Card",
+              "resultCode": "Refused",
+              "refusalReasonCode": "6",
+              "merchantReference": "some_order_number"
+            }',
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
+      subscription_plan = {}
+      subscriber = {}
+
+      result = recurring_payment.initiate_charge(payload: payload, subscription_plan: subscription_plan, subscriber: subscriber)
+
+      expect(result.success).to eq false
+      expect(result.code).to eq '6'
+      expect(result.message).to eq 'Received 6 - Expired Card'
+      expect(result.status).to eq 'Refused'
+      expect(result.payload).to eq 'some_payment_token'
+    end
+
+    it 'returns error payment result with errorCode and message' do
+      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
+        .with(headers: { 'Content-Type' => 'application/json' })
+        .to_return(
+          status: 422,
+          body: '{"status": 422, "errorCode": "100", "message": "Some error message"}',
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
+      subscription_plan = {}
+      subscriber = {}
+
+      result = recurring_payment.initiate_charge(payload: payload, subscription_plan: subscription_plan, subscriber: subscriber)
+
+      expect(result.success).to eq false
+      expect(result.code).to eq '100'
+      expect(result.message).to eq 'Received 100 - Some error message'
+      expect(result.status).to eq 422
+      expect(result.payload).to eq 'some_payment_token'
+    end
+  end
 
   describe '.after_charge' do
-    it 'returns success payment result' do
+    it 'returns payment result with success' do
       payment = { payment_token: 'some_payment_token', amount_cents: 5000, amount_currency: 'EUR' }
       result = recurring_payment.after_charge(payment: payment)
 
@@ -118,10 +144,60 @@ describe AccesstypeAdyen::Recurring do
       expect(result.payment_token).to eq 'some_payment_token'
       expect(result.amount_currency).to eq 'EUR'
     end
+
+    it 'returns error payment result with resultCode and refusalReason' do
+      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
+        .with(headers: { 'Content-Type' => 'application/json' })
+        .to_return(
+          status: 200,
+          body: '{
+              "pspReference": "883628594626593C",
+              "refusalReason": "Expired Card",
+              "resultCode": "Refused",
+              "refusalReasonCode": "6",
+              "merchantReference": "some_order_number"
+            }',
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
+      subscription_plan = {}
+      subscriber = {}
+
+      result = recurring_payment.initiate_charge(payload: payload, subscription_plan: subscription_plan, subscriber: subscriber)
+
+      expect(result.success).to eq false
+      expect(result.code).to eq '6'
+      expect(result.message).to eq 'Received 6 - Expired Card'
+      expect(result.status).to eq 'Refused'
+      expect(result.payload).to eq 'some_payment_token'
+    end
+
+    it 'returns error payment result with errorCode and message' do
+      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
+        .with(headers: { 'Content-Type' => 'application/json' })
+        .to_return(
+          status: 422,
+          body: '{"status": 422, "errorCode": "100", "message": "Some error message"}',
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
+      subscription_plan = {}
+      subscriber = {}
+
+      result = recurring_payment.initiate_charge(payload: payload, subscription_plan: subscription_plan, subscriber: subscriber)
+
+      expect(result.success).to eq false
+      expect(result.code).to eq '100'
+      expect(result.message).to eq 'Received 100 - Some error message'
+      expect(result.status).to eq 422
+      expect(result.payload).to eq 'some_payment_token'
+    end
   end
 
   describe '.cancel_subscription' do
-    it 'returns success payment result' do
+    it 'returns payment result with success' do
       stub_request(:post, 'https://pal-test.adyen.com/pal/servlet/Recurring/v49/disable')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(
@@ -137,7 +213,7 @@ describe AccesstypeAdyen::Recurring do
       expect(result.message).to eq 'Subscription cancelled successfully'
     end
 
-    it 'returns error payment result' do
+    it 'returns payment result with error' do
       stub_request(:post, 'https://pal-test.adyen.com/pal/servlet/Recurring/v49/disable')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(
