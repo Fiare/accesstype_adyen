@@ -33,15 +33,21 @@ module AccesstypeAdyen
     # payment is marked as successful. Make sure you
     # check payment response before calling this method.
     #
-    # Expected params: payment object with payment_token
+    # Expected params: payment object with payment_token, is_payment_details_required, opts
     # Returns: Payment Result object
-    def after_charge(payment:)
-      PaymentResult.success(
-        AccesstypeAdyen::PAYMENT_GATEWAY,
-        payment_token: payment[:payment_token],
-        amount_cents: payment[:amount_cents],
-        amount_currency: payment[:amount_currency].to_s
-      )
+    def after_charge(payment:, is_payment_details_required: false, opts: nil)
+      if is_payment_details_required
+        # TODO
+        # Call the API with opts and return the response
+        # based on /payments/details API response.
+      else
+        PaymentResult.success(
+          AccesstypeAdyen::PAYMENT_GATEWAY,
+          payment_token: payment[:payment_token],
+          amount_cents: payment[:amount_cents],
+          amount_currency: payment[:amount_currency].to_s
+        )
+      end
     end
 
     # Used for capturing payment from Adyen.
@@ -95,6 +101,10 @@ module AccesstypeAdyen
       else
         error_response(response['errorCode'], response['message'], response['status'], invoice[:external_payment_id])
       end
+    end
+
+    def initiate_charge
+      # TODO
     end
 
     def error_response(code, description, status, payload = nil)

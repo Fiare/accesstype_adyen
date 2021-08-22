@@ -11,7 +11,8 @@ module AccesstypeAdyen
       @environment = environment || 'live'
     end
 
-    # This method will return nil by default. We can't do anything without creating an order.
+    # This method will return nil by default.
+    # We can't do anything without creating an order.
     #
     # Expected params: any
     # Returns: nil
@@ -24,7 +25,7 @@ module AccesstypeAdyen
     #
     # Returns: boolean
     def charge?
-      true
+      false
     end
 
     # This is not a mandatory method. However, This method needs to be created in payment
@@ -32,43 +33,43 @@ module AccesstypeAdyen
     #
     # Expected params: payload, subscription_attempt
     # Returns: Payment result object
-    def charge(payload:, subscription_plan:, subscriber:)
-      response = Api.charge_recurring_subscription(
-        credentials,
-        payload,
-        subscription_plan,
-        subscriber
-      )
-
-      if response.code.to_i == 200
-        if VALID_STATUSES.include?(response['resultCode'].to_s)
-          payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
-          PaymentResult.success(
-            AccesstypeAdyen::PAYMENT_GATEWAY,
-            payment_token: payload[:payment_token],
-            payment_gateway_fee: !payment_fee.nil? ? payment_fee['amount']['value'] : nil,
-            payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
-            amount_currency: response['amount']['currency'].to_s,
-            amount_cents: response['amount']['value'],
-            status: response['resultCode']
-          )
-        else
-          error_response(
-            response['refusalReasonCode'],
-            response['refusalReason'],
-            response['resultCode'],
-            payload[:payment_token]
-          )
-        end
-      else
-        error_response(
-          response['errorCode'],
-          response['message'],
-          response['status'],
-          payload[:payment_token]
-        )
-      end
-    end
+    # def charge(payload:, subscription_plan:, subscriber:)
+    #   response = Api.charge_recurring_subscription(
+    #     credentials,
+    #     payload,
+    #     subscription_plan,
+    #     subscriber
+    #   )
+    #
+    #   if response.code.to_i == 200
+    #     if VALID_STATUSES.include?(response['resultCode'].to_s)
+    #       payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
+    #       PaymentResult.success(
+    #         AccesstypeAdyen::PAYMENT_GATEWAY,
+    #         payment_token: payload[:payment_token],
+    #         payment_gateway_fee: !payment_fee.nil? ? payment_fee['amount']['value'] : nil,
+    #         payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
+    #         amount_currency: response['amount']['currency'].to_s,
+    #         amount_cents: response['amount']['value'],
+    #         status: response['resultCode']
+    #       )
+    #     else
+    #       error_response(
+    #         response['refusalReasonCode'],
+    #         response['refusalReason'],
+    #         response['resultCode'],
+    #         payload[:payment_token]
+    #       )
+    #     end
+    #   else
+    #     error_response(
+    #       response['errorCode'],
+    #       response['message'],
+    #       response['status'],
+    #       payload[:payment_token]
+    #     )
+    #   end
+    # end
 
     # Used for fetching subscription and verifying
     # if the subscription is valid, but that is not
@@ -76,19 +77,25 @@ module AccesstypeAdyen
     # as successful. Make sure you check payment
     # response before calling this method.
     #
-    # Expected params: payment object with payment_token
+    # Expected params: payment object with payment_token, is_payment_details_required, opts
     # Returns: Payment result object
-    def after_charge(payment:)
-      PaymentResult.success(
-        AccesstypeAdyen::PAYMENT_TYPE_RECURRING,
-        payment_token: payment[:payment_token],
-        amount_cents: payment[:amount_cents],
-        amount_currency: payment[:amount_currency].to_s
-      )
+    def after_charge(payment:, is_payment_details_required: false, opts: nil)
+      if is_payment_details_required
+        # TODO
+        # Call the API with opts and return the response
+        # based on /payments/details API response.
+      else
+        PaymentResult.success(
+          AccesstypeAdyen::PAYMENT_TYPE_RECURRING,
+          payment_token: payment[:payment_token],
+          amount_cents: payment[:amount_cents],
+          amount_currency: payment[:amount_currency].to_s
+        )
+      end
     end
 
-    # Used for cancelling subscription
-    # If the cancellation is successful, the method will return a success struct with success = true
+    # Used for cancelling subscription. If the cancellation is
+    # successful, the method will return a success struct with success = true
     # Else the method will return an error struct, with success = false
     #
     # Expected params: payment object with subscriber_id
@@ -110,6 +117,12 @@ module AccesstypeAdyen
           payment[:payment_token]
         )
       end
+    end
+
+    def initiate_charge
+      # TODO
+      # Add client_payload attribute in payment response
+      # which will contains whole response of any adyen API.
     end
 
     def error_response(code, description, status, payload = nil)

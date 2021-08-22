@@ -12,12 +12,6 @@ module AccesstypeAdyen
     def valid_notification_hmac?(notification_request_item, hmac_key)
       expected_sign = calculate_notification_hmac(notification_request_item, hmac_key)
       merchant_sign = fetch(notification_request_item, 'additionalData.hmacSignature')
-
-      puts "-----------"
-      puts expected_sign
-      puts merchant_sign
-      puts "-----------"
-
       expected_sign == merchant_sign
     end
 

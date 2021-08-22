@@ -9,8 +9,8 @@ require_relative 'accesstype_adyen/management'
 require_relative 'accesstype_adyen/payment_result'
 require_relative 'accesstype_adyen/recurring'
 require_relative 'accesstype_adyen/version'
-# require_relative 'accesstype_adyen/webhooks'
-# require_relative 'accesstype_adyen/hmac_validator'
+require_relative 'accesstype_adyen/webhooks'
+require_relative 'accesstype_adyen/hmac_validator'
 
 module AccesstypeAdyen
   class Error < StandardError; end
