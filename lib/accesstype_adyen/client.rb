@@ -62,7 +62,13 @@ module AccesstypeAdyen
       )
     end
 
-    def charge_onetime(payment_token, payment_amount, payment_currency, merchant_account)
+    # Metadata consists of entries, each of which includes a key and a value. Limits:
+    # Maximum 20 key-value pairs per request. When exceeding, the "177" error occurs: "Metadata size exceeds limit".
+    # Maximum 20 characters per key.
+    # Maximum 80 characters per value.
+    #
+    # See more: https://docs.adyen.com/api-explorer/#/CheckoutService/v67/post/payments__reqParam_metadata
+    def charge_onetime(payment_token, attempt_token, payment_amount, payment_currency, merchant_account)
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
 
@@ -72,12 +78,13 @@ module AccesstypeAdyen
         {
           'amount' => { 'currency' => payment_currency, 'amount' => payment_amount },
           'paymentMethod' => { 'type' => 'scheme', 'storedPaymentMethodId' => payment_token },
-          'merchantAccount' => merchant_account
+          'merchantAccount' => merchant_account,
+          'metadata' => { 'attemptToken' => attempt_token }
         }
       )
     end
 
-    def charge_recurring_subscription(payment_token, payment_amount, payment_currency, subscription_id, subscriber_id, merchant_account)
+    def charge_recurring_subscription(payment_token, attempt_token, payment_amount, payment_currency, subscription_id, subscriber_id, merchant_account)
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
 
@@ -91,7 +98,8 @@ module AccesstypeAdyen
           'shopperInteraction' => 'ContAuth',
           'recurringProcessingModel' => 'Subscription',
           'shopperReference' => subscriber_id,
-          'merchantAccount' => merchant_account
+          'merchantAccount' => merchant_account,
+          'metadata' => { 'attemptToken' => attempt_token }
         }
       )
     end
@@ -138,7 +146,7 @@ module AccesstypeAdyen
     # page to complete the payment.
     #
     # See more: https://docs.adyen.com/api-explorer/#/CheckoutService/v67/post/payments/details
-    def payment_details(details)
+    def payment_details(state_data, payment_data)
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
 
@@ -146,7 +154,8 @@ module AccesstypeAdyen
         requested_path,
         fetch_route[:api],
         {
-          'details' => details
+          'details' => { 'threeDSResult' => state_data },
+          'paymentData' => payment_data
         }
       )
     end

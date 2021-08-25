@@ -33,22 +33,23 @@ module AccesstypeAdyen
     # payment is marked as successful. Make sure you
     # check payment response before calling this method.
     #
-    # Expected params: payment object with payment_token, is_payment_details_required, opts
+    # Expected params: payment object with payment_token
     # Returns: Payment Result object
-    def after_charge(payment:, is_payment_details_required: false, opts: nil)
-      if is_payment_details_required
-        response = Api.payment_details(credentials, opts)
+    def after_charge(payment:)
+      if !payment[:additional_data].nil? && payment.dig(:additional_data, :is_payment_details_required).to_s.downcase == 'true'
+        state_data = payment.dig(:additional_data, :dropin_state_data)
+        payment_data = payment.dig(:additional_data, :payment_data)
+
+        response = Api.payment_details(credentials, state_data, payment_data)
 
         if response.code.to_i == 200
           if VALID_STATUSES.include?(response['resultCode'].to_s)
-            payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
             PaymentResult.success(
               AccesstypeAdyen::PAYMENT_GATEWAY,
-              payment_token: payload[:payment_token],
-              payment_gateway_fee: !payment_fee.nil? ? payment_fee['amount']['value'] : nil,
-              payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
-              amount_currency: response['amount']['currency'].to_s,
-              amount_cents: response['amount']['value'],
+              payment_token: payment[:payment_token],
+              amount_currency: payment[:amount_currency].to_s,
+              amount_cents: payment[:amount_cents],
+              external_payment_id: response['pspReference'],
               status: response['resultCode']
             )
           else
@@ -56,7 +57,7 @@ module AccesstypeAdyen
               response['refusalReasonCode'],
               response['refusalReason'],
               response['resultCode'],
-              payload[:payment_token]
+              payment[:payment_token]
             )
           end
         else
@@ -64,15 +65,15 @@ module AccesstypeAdyen
             response['errorCode'],
             response['message'],
             response['status'],
-            payload[:payment_token]
+            payment[:payment_token]
           )
         end
       else
         PaymentResult.success(
           AccesstypeAdyen::PAYMENT_GATEWAY,
           payment_token: payment[:payment_token],
-          amount_cents: payment[:amount_cents],
-          amount_currency: payment[:amount_currency].to_s
+          amount_currency: payment[:amount_currency].to_s,
+          amount_cents: payment[:amount_cents]
         )
       end
     end
@@ -154,6 +155,7 @@ module AccesstypeAdyen
             payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
             amount_currency: !response['amount'].nil? ? response['amount']['currency'].to_s : nil,
             amount_cents: !response['amount'].nil? ? response['amount']['value'] : nil,
+            metadata: !response['action'].nil? ? response['action']['paymentData'] : nil,
             status: response['resultCode']
           )
         else

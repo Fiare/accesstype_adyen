@@ -12,7 +12,7 @@ describe AccesstypeAdyen::Management do
 
   describe '.credentials_valid?' do
     it 'returns true' do
-      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/paymentMethods')
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/paymentMethods')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(
           status: 200,
@@ -24,7 +24,7 @@ describe AccesstypeAdyen::Management do
     end
 
     it 'returns false' do
-      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/paymentMethods')
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/paymentMethods')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(status: 400, body: '{"status": 400, "errorCode": "100", "message": "Some error message"}', headers: { 'Content-Type' => 'application/json' })
 

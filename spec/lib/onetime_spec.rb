@@ -25,7 +25,7 @@ describe AccesstypeAdyen::Onetime do
 
   describe '.initiate_charge' do
     it 'returns payment result with success' do
-      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/payments')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(
           status: 200,
@@ -35,49 +35,52 @@ describe AccesstypeAdyen::Onetime do
                 "resultCode": "Authorised",
                 "amount": {
                   "currency": "EUR",
-                  "value": 6700
+                  "value": 2200
                 },
                 "merchantReference": "some_order_number"
               }',
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
-
+      payload = { payment_token: 'some_payment_token', amount_cents: 2200, amount_currency: 'EUR' }
       result = onetime_payment.initiate_charge(payload: payload)
 
       expect(result.success).to eq true
-      expect(result.amount_cents).to eq 6700
+      expect(result.amount_cents).to eq 2200
       expect(result.payment_token).to eq 'some_payment_token'
       expect(result.amount_currency).to eq 'EUR'
     end
     it 'returns payment result with redirect' do
-      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/payments')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(
           status: 200,
           body: '{
             "resultCode": "RedirectShopper",
             "action": {
-              "paymentMethodType": "ideal",
-              "url": "https://checkoutshopper-test.adyen.com/checkoutshopper/checkoutPaymentRedirect?redirectData=some_redirect_data",
-              "method": "GET",
-              "type": "redirect"
-            }
+              "data": {},
+              "method": "POST",
+              "paymentData": "some_payment_data",
+              "paymentMethodType": "scheme",
+              "type": "redirect",
+              "url": "https://test.adyen.com/hpp/3d/validate.shtml"
+            },
+            "details": []
           }',
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
+      payload = { payment_token: 'some_payment_token', amount_cents: 2300, amount_currency: 'EUR' }
 
       result = onetime_payment.initiate_charge(payload: payload)
 
       expect(result.success).to eq true
       expect(result.status).to eq 'RedirectShopper'
       expect(result.payment_token).to eq 'some_payment_token'
+      expect(result.metadata).to eq 'some_payment_data'
     end
     it 'returns error payment result with resultCode and refusalReason' do
-      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/payments')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(
           status: 200,
@@ -91,7 +94,7 @@ describe AccesstypeAdyen::Onetime do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
+      payload = { payment_token: 'some_payment_token', amount_cents: 2400, amount_currency: 'EUR' }
 
       result = onetime_payment.initiate_charge(payload: payload)
 
@@ -103,7 +106,7 @@ describe AccesstypeAdyen::Onetime do
     end
 
     it 'returns error payment result with errorCode and message' do
-      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/payments')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(
           status: 422,
@@ -111,7 +114,7 @@ describe AccesstypeAdyen::Onetime do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
+      payload = { payment_token: 'some_payment_token', amount_cents: 2500, amount_currency: 'EUR' }
 
       result = onetime_payment.initiate_charge(payload: payload)
 
@@ -124,18 +127,50 @@ describe AccesstypeAdyen::Onetime do
   end
 
   describe '.after_charge' do
-    it 'returns payment result with success' do
-      payment = { payment_token: 'some_payment_token', amount_cents: 5000, amount_currency: 'EUR' }
+    it 'returns payment result with success without need for payment details' do
+      payment = { payment_token: 'some_payment_token', amount_cents: 2600, amount_currency: 'EUR' }
       result = onetime_payment.after_charge(payment: payment)
 
       expect(result.success).to eq true
-      expect(result.amount_cents).to eq 5000
+      expect(result.amount_cents).to eq 2600
       expect(result.payment_token).to eq 'some_payment_token'
       expect(result.amount_currency).to eq 'EUR'
     end
 
+    it 'returns payment result with success with payment details' do
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/payments/details')
+        .with(headers: { 'Content-Type' => 'application/json' })
+        .to_return(
+          status: 200,
+          body: '{
+            "pspReference": "88154795347618C",
+            "resultCode": "Authorised"
+          }',
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      payment = {
+        payment_token: 'some_payment_token',
+        amount_cents: 2700,
+        amount_currency: 'EUR',
+        additional_data:
+          {
+            is_payment_details_required: true,
+            dropin_state_data: 'some_state_data',
+            payment_data: 'some_payment_data'
+          }
+      }
+      result = onetime_payment.after_charge(payment: payment)
+
+      expect(result.success).to eq true
+      expect(result.amount_currency).to eq 'EUR'
+      expect(result.amount_cents).to eq 2700
+      expect(result.payment_token).to eq 'some_payment_token'
+      expect(result.external_payment_id).to eq '88154795347618C'
+    end
+
     it 'returns error payment result with resultCode and refusalReason' do
-      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/payments/details')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(
           status: 200,
@@ -149,9 +184,13 @@ describe AccesstypeAdyen::Onetime do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
-
-      result = onetime_payment.initiate_charge(payload: payload)
+      payment = {
+        payment_token: 'some_payment_token',
+        amount_cents: 2800,
+        amount_currency: 'EUR',
+        additional_data: { is_payment_details_required: true }
+      }
+      result = onetime_payment.after_charge(payment: payment)
 
       expect(result.success).to eq false
       expect(result.code).to eq '6'
@@ -161,7 +200,7 @@ describe AccesstypeAdyen::Onetime do
     end
 
     it 'returns error payment result with errorCode and message' do
-      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments')
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/payments/details')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(
           status: 422,
@@ -169,9 +208,13 @@ describe AccesstypeAdyen::Onetime do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 6700, amount_currency: 'EUR' }
-
-      result = onetime_payment.initiate_charge(payload: payload)
+      payment = {
+        payment_token: 'some_payment_token',
+        amount_cents: 2900,
+        amount_currency: 'EUR',
+        additional_data: { is_payment_details_required: true }
+      }
+      result = onetime_payment.after_charge(payment: payment)
 
       expect(result.success).to eq false
       expect(result.code).to eq '100'
@@ -183,26 +226,32 @@ describe AccesstypeAdyen::Onetime do
 
   describe '.capture' do
     it 'returns payment result with success' do
-      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments/some_payment_token/captures')
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/payments/some_payment_token/captures')
         .with(headers: { 'Content-Type' => 'application/json' })
-        .to_return(status: 200, body: '{"amount": {"currency": "EUR", "value": 6000}, "status": "received"}', headers: { 'Content-Type' => 'application/json' })
+        .to_return(
+          status: 200,
+          body: '{
+            "amount": { "currency": "EUR", "value": 3000 },
+            "status": "received"
+          }',
+          headers: { 'Content-Type' => 'application/json' })
 
-      payment = { payment_token: 'some_payment_token', amount_cents: 6000, amount_currency: 'EUR' }
+      payment = { payment_token: 'some_payment_token', amount_cents: 3000, amount_currency: 'EUR' }
       result = onetime_payment.capture(payment: payment)
 
       expect(result.success).to eq true
-      expect(result.amount_cents).to eq 6000
+      expect(result.amount_cents).to eq 3000
       expect(result.payment_token).to eq 'some_payment_token'
       expect(result.amount_currency).to eq 'EUR'
       expect(result.status).to eq 'received'
     end
 
     it 'returns payment result with error' do
-      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments/some_payment_token/captures')
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/payments/some_payment_token/captures')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(status: 422, body: '{"status": 422, "errorCode": "100", "message": "Some error message"}', headers: { 'Content-Type' => 'application/json' })
 
-      payment = { payment_token: 'some_payment_token', amount_cents: 6000, amount_currency: 'EUR' }
+      payment = { payment_token: 'some_payment_token', amount_cents: 3100, amount_currency: 'EUR' }
       result = onetime_payment.capture(payment: payment)
 
       expect(result.success).to eq false
@@ -215,12 +264,12 @@ describe AccesstypeAdyen::Onetime do
 
   describe '.refund_payment' do
     it 'returns payment result with success' do
-      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments/some_external_payment_id/refunds')
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/payments/some_external_payment_id/refunds')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(
           status: 200,
           body: '{
-            "amount": {"currency": "EUR", "value": 3000},
+            "amount": {"currency": "EUR", "value": 3200},
             "merchantAccount": "some_merchant_account",
             "paymentPspReference": "some_payment_reference",
             "pspReference": "some_reference",
@@ -229,17 +278,17 @@ describe AccesstypeAdyen::Onetime do
           headers: { 'Content-Type' => 'application/json' })
 
       invoice = { external_payment_id: 'some_external_payment_id', amount_currency: 'EUR' }
-      result = onetime_payment.refund_payment(invoice: invoice, amount: 3000)
+      result = onetime_payment.refund_payment(invoice: invoice, amount: 3200)
 
       expect(result.success).to eq true
-      expect(result.amount_cents).to eq 3000
+      expect(result.amount_cents).to eq 3200
       expect(result.external_refund_id).to eq 'some_payment_reference'
       expect(result.amount_currency).to eq 'EUR'
       expect(result.status).to eq 'received'
     end
 
     it 'returns payment result with error' do
-      stub_request(:post, 'https://checkout-test.adyen.com/checkout/v67/payments/some_external_payment_id/refunds')
+      stub_request(:post, 'https://checkout-test.adyen.com/v67/payments/some_external_payment_id/refunds')
         .with(headers: { 'Content-Type' => 'application/json' })
         .to_return(
           status: 422,
@@ -247,7 +296,7 @@ describe AccesstypeAdyen::Onetime do
           headers: { 'Content-Type' => 'application/json' })
 
       invoice = { external_payment_id: 'some_external_payment_id', amount_currency: 'EUR' }
-      result = onetime_payment.refund_payment(invoice: invoice, amount: 3000)
+      result = onetime_payment.refund_payment(invoice: invoice, amount: 3300)
 
       expect(result.success).to eq false
       expect(result.code).to eq '100'
