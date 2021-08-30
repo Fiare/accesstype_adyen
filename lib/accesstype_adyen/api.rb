@@ -31,21 +31,16 @@ module AccesstypeAdyen
       end
 
       # Used for charging the onetime payment.
-      #
-      # Payload contains "attempt_token" that needs to be passed to
-      # payment in its metadata, so in the notification webhook payment
-      # can be identified by the attempt token value.
-      # See more: https://docs.adyen.com/api-explorer/#/CheckoutService/v67/post/payments__reqParam_metadata
       def charge_onetime(credentials, payload)
         Client.new(
           AccesstypeAdyen::CONFIG[credentials[:environment].to_sym],
           credentials
         ).charge_onetime(
-          payload[:payment_token],
-          payload[:attempt_token],
-          payload[:amount_cents],
-          payload[:amount_currency].to_s,
-          credentials[:merchant_account]
+          payload[:subscription][:additional_data][:dropin_state_data][:paymentMethod],
+          payload[:subscription][:payment][:amount_cents],
+          payload[:subscription][:payment][:amount_currency].to_s,
+          credentials[:merchant_account],
+          payload[:attempt_token]
         )
       end
 

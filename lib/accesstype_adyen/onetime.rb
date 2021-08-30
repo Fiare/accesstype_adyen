@@ -139,7 +139,8 @@ module AccesstypeAdyen
     #
     # Expected params: payload
     # Returns: Payment result object
-    def initiate_charge(payload:)
+    def initiate_charge(payload:,subscription_plan:,subscriber:)
+      binding.pry
       response = Api.charge_onetime(
         credentials,
         payload
@@ -156,7 +157,8 @@ module AccesstypeAdyen
             amount_currency: !response['amount'].nil? ? response['amount']['currency'].to_s : nil,
             amount_cents: !response['amount'].nil? ? response['amount']['value'] : nil,
             metadata: !response['action'].nil? ? response['action']['paymentData'] : nil,
-            status: response['resultCode']
+            status: response['resultCode'],
+            client_payload: response
           )
         else
           error_response(

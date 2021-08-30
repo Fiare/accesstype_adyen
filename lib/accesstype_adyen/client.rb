@@ -68,18 +68,19 @@ module AccesstypeAdyen
     # Maximum 80 characters per value.
     #
     # See more: https://docs.adyen.com/api-explorer/#/CheckoutService/v67/post/payments__reqParam_metadata
-    def charge_onetime(payment_token, attempt_token, payment_amount, payment_currency, merchant_account)
+    def charge_onetime(payment_method, payment_amount, payment_currency, merchant_account, attempt_token)
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
-
       client.post(
         requested_path,
         fetch_route[:api],
         {
-          'amount' => { 'currency' => payment_currency, 'amount' => payment_amount },
-          'paymentMethod' => { 'type' => 'scheme', 'storedPaymentMethodId' => payment_token },
+          'amount' => { 'currency' => payment_currency, 'value' => payment_amount },
+          'metadata' => { 'attemptToken' => attempt_token },
+          'reference' => attempt_token,
+          'paymentMethod' => payment_method.to_enum.to_h,
           'merchantAccount' => merchant_account,
-          'metadata' => { 'attemptToken' => attempt_token }
+          'returnUrl' => "http://localhost:7000/api/access/v1/handle-payment-gateway-response?attempt_token=#{attempt_token}"
         }
       )
     end
@@ -171,3 +172,5 @@ module AccesstypeAdyen
     end
   end
 end
+
+
