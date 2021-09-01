@@ -68,7 +68,17 @@ module AccesstypeAdyen
     # Maximum 80 characters per value.
     #
     # See more: https://docs.adyen.com/api-explorer/#/CheckoutService/v67/post/payments__reqParam_metadata
-    def charge_onetime(payment_method, payment_amount, payment_currency, merchant_account, attempt_token, browser_info)
+    def charge_onetime(payment_method, payment_amount, payment_currency, merchant_account, attempt_token,return_url,browser_info, origin)
+
+      # these paramters are only required for native 3ds2 transactions. Please add it only 
+      # when paymentMethod type is scheme ie cards
+
+      # 'channel' => 'Web',
+      # 'additionalData' => {
+      #  'allow3DS2' => true
+      # },
+      # 'origin' => 'http://localhost:5000',
+      # 'browserInfo' => browser_info,
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
       client.post(
@@ -86,7 +96,7 @@ module AccesstypeAdyen
           'reference' => attempt_token,
           'paymentMethod' => payment_method.to_enum.to_h,
           'merchantAccount' => merchant_account,
-          'returnUrl' => "http://localhost:7000/api/access/v1/handle-payment-gateway-response?attempt_token=#{attempt_token}&key=#{'jHvWdHbicpNTVD4VoFRecxGJ'}"
+          'returnUrl' => return_url
         }
       )
     end
@@ -157,18 +167,16 @@ module AccesstypeAdyen
     def payment_details(details, payment_data)
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
+      # use better names
       some_hash = {
         'details' =>  details
       }
       some_hash.merge({'paymentData' => payment_data}) if !payment_data.nil? 
-      
-      binding.pry
-
+  
       client.post(
         requested_path,
         fetch_route[:api],
-        some_hash
-        
+        some_hash    
       )
     end
 

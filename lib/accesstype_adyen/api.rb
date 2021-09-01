@@ -32,6 +32,8 @@ module AccesstypeAdyen
 
       # Used for charging the onetime payment.
       def charge_onetime(credentials, payload)
+        binding.pry
+
         Client.new(
           AccesstypeAdyen::CONFIG[credentials[:environment].to_sym],
           credentials
@@ -41,7 +43,10 @@ module AccesstypeAdyen
           payload[:subscription][:payment][:amount_currency].to_s,
           credentials[:merchant_account],
           payload[:attempt_token],
-          payload[:subscription][:additional_data][:dropin_state_data][:browserInfo].to_enum.to_h
+          payload[:subscription][:additional_data][:return_url],
+          payload[:subscription][:additional_data][:dropin_state_data][:browserInfo] ? payload[:subscription][:additional_data][:dropin_state_data][:browserInfo].to_enum.to_h : nil,
+          payload[:subscription][:additional_data][:origin]
+
         )
       end
 
