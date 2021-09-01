@@ -40,7 +40,8 @@ module AccesstypeAdyen
           payload[:subscription][:payment][:amount_cents],
           payload[:subscription][:payment][:amount_currency].to_s,
           credentials[:merchant_account],
-          payload[:attempt_token]
+          payload[:attempt_token],
+          payload[:subscription][:additional_data][:dropin_state_data][:browserInfo].to_enum.to_h
         )
       end
 
@@ -55,13 +56,12 @@ module AccesstypeAdyen
           AccesstypeAdyen::CONFIG[credentials[:environment].to_sym],
           credentials
         ).charge_recurring_subscription(
-          payload[:payment_token],
+          payload[:subscription][:additional_data][:dropin_state_data][:paymentMethod],
+          payload[:subscription][:payment][:amount_cents],
+          payload[:subscription][:payment][:amount_currency].to_s,
+          credentials[:merchant_account],
           payload[:attempt_token],
-          payload[:amount_cents],
-          payload[:amount_currency].to_s,
-          subscription_plan[:id],
-          subscriber[:id],
-          credentials[:merchant_account]
+          subscriber[:id]
         )
       end
 
@@ -87,11 +87,11 @@ module AccesstypeAdyen
       end
 
       # Used to send payment details to payment gateway after redirection was needed
-      def payment_details(credentials, state_data, payment_data)
+      def payment_details(credentials, details, payment_data)
         Client.new(
           AccesstypeAdyen::CONFIG[credentials[:environment].to_sym],
           credentials
-        ).payment_details(state_data, payment_data)
+        ).payment_details(details, payment_data)
       end
     end
   end
