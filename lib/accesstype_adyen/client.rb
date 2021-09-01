@@ -70,6 +70,8 @@ module AccesstypeAdyen
     # See more: https://docs.adyen.com/api-explorer/#/CheckoutService/v67/post/payments__reqParam_metadata
     def charge_onetime(payment_method, payment_amount, payment_currency, merchant_account, attempt_token,return_url,browser_info, origin)
 
+      # TODO: Please pass the extra parameters for charge_recurring_subscription
+
       # these paramters are only required for native 3ds2 transactions. Please add it only 
       # when paymentMethod type is scheme ie cards
 
@@ -91,7 +93,7 @@ module AccesstypeAdyen
            'additionalData' => {
             'allow3DS2' => true
            },
-           'origin' => 'http://localhost:5000',
+           'origin' => origin,
            'browserInfo' => browser_info,
           'reference' => attempt_token,
           'paymentMethod' => payment_method.to_enum.to_h,
@@ -167,16 +169,16 @@ module AccesstypeAdyen
     def payment_details(details, payment_data)
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
-      # use better names
-      some_hash = {
+      
+      payload = {
         'details' =>  details
       }
-      some_hash.merge({'paymentData' => payment_data}) if !payment_data.nil? 
+      payload.merge({'paymentData' => payment_data}) if !payment_data.nil? 
   
       client.post(
         requested_path,
         fetch_route[:api],
-        some_hash    
+        payload   
       )
     end
 

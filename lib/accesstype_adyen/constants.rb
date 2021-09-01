@@ -8,8 +8,8 @@ module AccesstypeAdyen
       pal: { root_url: 'https://pal-test.adyen.com/pal/servlet' }
     },
     live: {
-      checkout: { root_url: 'https://checkout-test.adyen.com' },
-      pal: { root_url: 'https://pal-test.adyen.com/pal/servlet' }
+      checkout: { root_url: 'https://checkout.adyen.com' },
+      pal: { root_url: 'https://pal.adyen.com/pal/servlet' }
     }
   }.freeze
 
