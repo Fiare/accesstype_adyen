@@ -23,6 +23,7 @@ module AccesstypeAdyen
     'Authorised', # The payment was successfully authorised.
     'ChallengeShopper', # The issuer requires further shopper interaction before the payment can be authenticated. Returned for 3D Secure 2 transactions.
     'IdentifyShopper', # The issuer requires the shopper's device fingerprint before the payment can be authenticated. Returned for 3D Secure 2 transactions.
+    'Pending', #It's not possible to obtain the final status of the payment at this time.
     'PresentToShopper', # Present the voucher or the QR code to the shopper.
     'Received', # This is part of the standard payment flow for methods such as SEPA Direct Debit, where it can take some time before the final status of the payment is known.
     'RedirectShopper', # The shopper needs to be redirected to an external web page or app to complete the payment.
@@ -31,7 +32,6 @@ module AccesstypeAdyen
   # Other possible result code statuses:
   # 'Cancelled', The payment was cancelled (by either the shopper or your own system) before processing was completed.
   # 'Error', There was an error when the payment was being processed.
-  # 'Pending' It's not possible to obtain the final status of the payment at this time.
   # 'Refused' The payment was refused.
 
   # See more: https://docs.adyen.com/online-payments/classic-integrations/api-integration-ecommerce/recurring-payments/disable-stored-details#response
