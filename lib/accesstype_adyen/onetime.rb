@@ -40,14 +40,13 @@ module AccesstypeAdyen
         state_data = payment.dig(:additional_data, :details)
         payment_data = payment.dig(:additional_data, :payment_data)
 
-
         response = Api.payment_details(credentials, state_data, payment_data)
 
         if response.code.to_i == 200
           if VALID_STATUSES.include?(response['resultCode'].to_s)
             PaymentResult.success(
               AccesstypeAdyen::PAYMENT_GATEWAY,
-              payment_token: response['pspReference'] ,
+              payment_token: payment[:payment_token],
               amount_currency: payment[:amount_currency].to_s,
               amount_cents: payment[:amount_cents],
               external_payment_id: response['pspReference'],
@@ -141,14 +140,13 @@ module AccesstypeAdyen
     #
     # Expected params: payload
     # Returns: Payment result object
-    def initiate_charge(payload:,subscription_plan:,subscriber:)
+    def initiate_charge(payload:, subscription_plan:, subscriber:)
       response = Api.charge_onetime(
         credentials,
         payload
       )
 
       if response.code.to_i == 200
-
         if VALID_STATUSES.include?(response['resultCode'].to_s)
           payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
           PaymentResult.success(

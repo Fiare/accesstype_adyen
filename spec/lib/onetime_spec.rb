@@ -42,8 +42,35 @@ describe AccesstypeAdyen::Onetime do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 2200, amount_currency: 'EUR' }
-      result = onetime_payment.initiate_charge(payload: payload)
+      payload = {
+        subscription: {
+          additional_data: {
+            dropin_state_data: {
+              paymentMethod: {
+                type: 'scheme',
+                encryptedCardNumber: 'test_4111111111111111',
+                encryptedExpiryMonth: 'test_03',
+                encryptedExpiryYear: 'test_2030',
+                encryptedSecurityCode: 'test_737'
+              },
+              browserInfo: {
+                userAgent: 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0',
+                acceptHeader: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+              },
+              origin: 'some_origin'
+            },
+            return_url: 'https://www.example.com',
+          },
+          payment: {
+            amount_cents: 2200,
+            amount_currency: 'EUR'
+          },
+        },
+        attempt_token: 'some_attempt_token',
+        payment_token: 'some_payment_token'
+      }
+
+      result = onetime_payment.initiate_charge(payload: payload, subscription_plan: nil, subscriber: nil)
 
       expect(result.success).to eq true
       expect(result.amount_cents).to eq 2200
@@ -70,9 +97,35 @@ describe AccesstypeAdyen::Onetime do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 2300, amount_currency: 'EUR' }
+      payload = {
+        subscription: {
+          additional_data: {
+            dropin_state_data: {
+              paymentMethod: {
+                type: 'scheme',
+                encryptedCardNumber: 'test_4111111111111111',
+                encryptedExpiryMonth: 'test_03',
+                encryptedExpiryYear: 'test_2030',
+                encryptedSecurityCode: 'test_737'
+              },
+              browserInfo: {
+                userAgent: 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0',
+                acceptHeader: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+              },
+              origin: 'some_origin'
+            },
+            return_url: 'https://www.example.com',
+          },
+          payment: {
+            amount_cents: 2300,
+            amount_currency: 'EUR'
+          },
+        },
+        attempt_token: 'some_attempt_token',
+        payment_token: 'some_payment_token'
+      }
 
-      result = onetime_payment.initiate_charge(payload: payload)
+      result = onetime_payment.initiate_charge(payload: payload, subscription_plan: nil, subscriber: nil)
 
       expect(result.success).to eq true
       expect(result.status).to eq 'RedirectShopper'
@@ -94,9 +147,35 @@ describe AccesstypeAdyen::Onetime do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 2400, amount_currency: 'EUR' }
+      payload = {
+        subscription: {
+          additional_data: {
+            dropin_state_data: {
+              paymentMethod: {
+                type: 'scheme',
+                encryptedCardNumber: 'test_4111111111111111',
+                encryptedExpiryMonth: 'test_03',
+                encryptedExpiryYear: 'test_2030',
+                encryptedSecurityCode: 'test_737'
+              },
+              browserInfo: {
+                userAgent: 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0',
+                acceptHeader: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+              },
+              origin: 'some_origin'
+            },
+            return_url: 'https://www.example.com',
+          },
+          payment: {
+            amount_cents: 2400,
+            amount_currency: 'EUR'
+          },
+        },
+        attempt_token: 'some_attempt_token',
+        payment_token: 'some_payment_token'
+      }
 
-      result = onetime_payment.initiate_charge(payload: payload)
+      result = onetime_payment.initiate_charge(payload: payload, subscription_plan: nil, subscriber: nil)
 
       expect(result.success).to eq false
       expect(result.code).to eq '6'
@@ -114,9 +193,35 @@ describe AccesstypeAdyen::Onetime do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 2500, amount_currency: 'EUR' }
+      payload = {
+        subscription: {
+          additional_data: {
+            dropin_state_data: {
+              paymentMethod: {
+                type: 'scheme',
+                encryptedCardNumber: 'test_4111111111111111',
+                encryptedExpiryMonth: 'test_03',
+                encryptedExpiryYear: 'test_2030',
+                encryptedSecurityCode: 'test_737'
+              },
+              browserInfo: {
+                userAgent: 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0',
+                acceptHeader: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+              },
+              origin: 'some_origin'
+            },
+            return_url: 'https://www.example.com',
+          },
+          payment: {
+            amount_cents: 2500,
+            amount_currency: 'EUR'
+          },
+        },
+        attempt_token: 'some_attempt_token',
+        payment_token: 'some_payment_token'
+      }
 
-      result = onetime_payment.initiate_charge(payload: payload)
+      result = onetime_payment.initiate_charge(payload: payload, subscription_plan: nil, subscriber: nil)
 
       expect(result.success).to eq false
       expect(result.code).to eq '100'

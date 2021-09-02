@@ -48,7 +48,34 @@ describe AccesstypeAdyen::Recurring do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 1200, amount_currency: 'EUR' }
+      payload = {
+        subscription: {
+          additional_data: {
+            dropin_state_data: {
+              paymentMethod: {
+                type: 'scheme',
+                encryptedCardNumber: 'test_4111111111111111',
+                encryptedExpiryMonth: 'test_03',
+                encryptedExpiryYear: 'test_2030',
+                encryptedSecurityCode: 'test_737'
+              },
+              browserInfo: {
+                userAgent: 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0',
+                acceptHeader: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+              },
+              origin: 'some_origin'
+            },
+            return_url: 'https://www.example.com',
+          },
+          payment: {
+            amount_cents: 1200,
+            amount_currency: 'EUR'
+          },
+        },
+        attempt_token: 'some_attempt_token',
+        payment_token: 'some_payment_token'
+      }
+
       result = recurring_payment.initiate_charge(payload: payload, subscription_plan: { id: 1002 }, subscriber: { id: 2003 })
 
       expect(result.success).to eq true
@@ -76,7 +103,34 @@ describe AccesstypeAdyen::Recurring do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 1300, amount_currency: 'EUR' }
+      payload = {
+        subscription: {
+          additional_data: {
+            dropin_state_data: {
+              paymentMethod: {
+                type: 'scheme',
+                encryptedCardNumber: 'test_4111111111111111',
+                encryptedExpiryMonth: 'test_03',
+                encryptedExpiryYear: 'test_2030',
+                encryptedSecurityCode: 'test_737'
+              },
+              browserInfo: {
+                userAgent: 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0',
+                acceptHeader: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+              },
+              origin: 'some_origin'
+            },
+            return_url: 'https://www.example.com',
+          },
+          payment: {
+            amount_cents: 1300,
+            amount_currency: 'EUR'
+          },
+        },
+        attempt_token: 'some_attempt_token',
+        payment_token: 'some_payment_token'
+      }
+
       result = recurring_payment.initiate_charge(payload: payload, subscription_plan: { id: 1002 }, subscriber: { id: 2003 })
 
       expect(result.success).to eq true
@@ -102,7 +156,34 @@ describe AccesstypeAdyen::Recurring do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 1400, amount_currency: 'EUR' }
+      payload = {
+        subscription: {
+          additional_data: {
+            dropin_state_data: {
+              paymentMethod: {
+                type: 'scheme',
+                encryptedCardNumber: 'test_4111111111111111',
+                encryptedExpiryMonth: 'test_03',
+                encryptedExpiryYear: 'test_2030',
+                encryptedSecurityCode: 'test_737'
+              },
+              browserInfo: {
+                userAgent: 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0',
+                acceptHeader: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+              },
+              origin: 'some_origin'
+            },
+            return_url: 'https://www.example.com',
+          },
+          payment: {
+            amount_cents: 1400,
+            amount_currency: 'EUR'
+          },
+        },
+        attempt_token: 'some_attempt_token',
+        payment_token: 'some_payment_token'
+      }
+
       result = recurring_payment.initiate_charge(payload: payload, subscription_plan: { id: 1002 }, subscriber: { id: 2003 })
 
       expect(result.success).to eq false
@@ -121,7 +202,34 @@ describe AccesstypeAdyen::Recurring do
           headers: { 'Content-Type' => 'application/json' }
         )
 
-      payload = { payment_token: 'some_payment_token', amount_cents: 1500, amount_currency: 'EUR' }
+      payload = {
+        subscription: {
+          additional_data: {
+            dropin_state_data: {
+              paymentMethod: {
+                type: 'scheme',
+                encryptedCardNumber: 'test_4111111111111111',
+                encryptedExpiryMonth: 'test_03',
+                encryptedExpiryYear: 'test_2030',
+                encryptedSecurityCode: 'test_737'
+              },
+              browserInfo: {
+                userAgent: 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008052912 Firefox/3.0',
+                acceptHeader: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+              },
+              origin: 'some_origin'
+            },
+            return_url: 'https://www.example.com',
+          },
+          payment: {
+            amount_cents: 1500,
+            amount_currency: 'EUR'
+          },
+        },
+        attempt_token: 'some_attempt_token',
+        payment_token: 'some_payment_token'
+      }
+
       result = recurring_payment.initiate_charge(payload: payload, subscription_plan: { id: 1002 }, subscriber: { id: 2003 })
 
       expect(result.success).to eq false

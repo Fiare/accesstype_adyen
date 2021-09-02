@@ -68,12 +68,9 @@ module AccesstypeAdyen
     # Maximum 80 characters per value.
     #
     # See more: https://docs.adyen.com/api-explorer/#/CheckoutService/v67/post/payments__reqParam_metadata
-    def charge_onetime(payment_method, payment_amount, payment_currency, merchant_account, attempt_token,return_url,browser_info, origin)
-
-      # TODO: Please pass the extra parameters for charge_recurring_subscription
-
-      # these paramters are only required for native 3ds2 transactions. Please add it only 
-      # when paymentMethod type is scheme ie cards
+    def charge_onetime(payment_method, payment_amount, payment_currency, merchant_account, attempt_token, return_url, browser_info, origin)
+      # These parameters are only required for native 3ds2 transactions.
+      # Please add it only when paymentMethod type is scheme ie cards
 
       # 'channel' => 'Web',
       # 'additionalData' => {
@@ -81,46 +78,77 @@ module AccesstypeAdyen
       # },
       # 'origin' => 'http://localhost:5000',
       # 'browserInfo' => browser_info,
+
+      options = {
+        'amount' => { 'currency' => payment_currency, 'value' => payment_amount },
+        'metadata' => { 'attemptToken' => attempt_token },
+        'reference' => attempt_token,
+        'paymentMethod' => payment_method.to_enum.to_h,
+        'merchantAccount' => merchant_account,
+        'returnUrl' => return_url
+      }
+
+      if payment_method.to_enum.to_h.eql?(:scheme)
+        options.merge!(
+          'channel' => 'Web',
+          'additionalData' => {
+            'allow3DS2' => true
+          },
+          'origin' => origin,
+          'browserInfo' => browser_info
+        )
+      end
+
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
       client.post(
         requested_path,
         fetch_route[:api],
-        {
-          'amount' => { 'currency' => payment_currency, 'value' => payment_amount },
-          'metadata' => { 'attemptToken' => attempt_token },
-           'channel' => 'Web',
-           'additionalData' => {
-            'allow3DS2' => true
-           },
-           'origin' => origin,
-           'browserInfo' => browser_info,
-          'reference' => attempt_token,
-          'paymentMethod' => payment_method.to_enum.to_h,
-          'merchantAccount' => merchant_account,
-          'returnUrl' => return_url
-        }
+        options
       )
     end
 
-    def charge_recurring_subscription(payment_method, payment_amount, payment_currency,merchant_account, attempt_token, subscriber_id)
+    def charge_recurring_subscription(payment_method, payment_amount, payment_currency, merchant_account, attempt_token, return_url, browser_info, origin, subscriber_id)
+      # These parameters are only required for native 3ds2 transactions.
+      # Please add it only when paymentMethod type is scheme ie cards
+
+      # 'channel' => 'Web',
+      # 'additionalData' => {
+      #  'allow3DS2' => true
+      # },
+      # 'origin' => 'http://localhost:5000',
+      # 'browserInfo' => browser_info,
+
+      options = {
+        'amount' => { 'currency' => payment_currency, 'value' => payment_amount },
+        'metadata' => { 'attemptToken' => attempt_token },
+        'reference' => attempt_token,
+        'paymentMethod' => payment_method.to_enum.to_h,
+        'shopperInteraction' => 'Ecommerce',
+        'recurringProcessingModel' => 'Subscription',
+        'shopperReference' => subscriber_id,
+        'merchantAccount' => merchant_account,
+        'returnUrl' => "http://localhost:7000/api/access/v1/handle-payment-gateway-response?attempt_token=#{attempt_token}"
+      }
+
+      if payment_method.to_enum.to_h.eql?(:scheme)
+        options.merge!(
+          'channel' => 'Web',
+          'additionalData' => {
+            'allow3DS2' => true
+          },
+          'origin' => origin,
+          'browserInfo' => browser_info
+        )
+      end
+
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
 
       client.post(
         requested_path,
         fetch_route[:api],
-        {
-          'amount' => { 'currency' => payment_currency, 'value' => payment_amount },
-          'paymentMethod' => payment_method.to_enum.to_h,
-          'reference' => attempt_token,
-          'shopperInteraction' => 'Ecommerce',
-          'recurringProcessingModel' => 'Subscription',
-          'shopperReference' => subscriber_id,
-          'merchantAccount' => merchant_account,
-          'metadata' => { 'attemptToken' => attempt_token },
-          'returnUrl' => "http://localhost:7000/api/access/v1/handle-payment-gateway-response?attempt_token=#{attempt_token}"
-        }
+        options
       )
     end
 
@@ -169,16 +197,16 @@ module AccesstypeAdyen
     def payment_details(details, payment_data)
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
-      
+
       payload = {
-        'details' =>  details
+        'details' => details
       }
-      payload.merge({'paymentData' => payment_data}) if !payment_data.nil? 
-  
+      payload.merge({ 'paymentData' => payment_data }) unless payment_data.nil?
+
       client.post(
         requested_path,
         fetch_route[:api],
-        payload   
+        payload
       )
     end
 
