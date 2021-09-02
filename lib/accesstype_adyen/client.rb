@@ -68,23 +68,42 @@ module AccesstypeAdyen
     # Maximum 80 characters per value.
     #
     # See more: https://docs.adyen.com/api-explorer/#/CheckoutService/v67/post/payments__reqParam_metadata
-    def charge_onetime(payment_token, attempt_token, payment_amount, payment_currency, merchant_account)
+    def charge_onetime(payment_method, payment_amount, payment_currency, merchant_account, attempt_token,return_url,browser_info, origin)
+
+      # TODO: Please pass the extra parameters for charge_recurring_subscription
+
+      # these paramters are only required for native 3ds2 transactions. Please add it only 
+      # when paymentMethod type is scheme ie cards
+
+      # 'channel' => 'Web',
+      # 'additionalData' => {
+      #  'allow3DS2' => true
+      # },
+      # 'origin' => 'http://localhost:5000',
+      # 'browserInfo' => browser_info,
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
-
       client.post(
         requested_path,
         fetch_route[:api],
         {
-          'amount' => { 'currency' => payment_currency, 'amount' => payment_amount },
-          'paymentMethod' => { 'type' => 'scheme', 'storedPaymentMethodId' => payment_token },
+          'amount' => { 'currency' => payment_currency, 'value' => payment_amount },
+          'metadata' => { 'attemptToken' => attempt_token },
+           'channel' => 'Web',
+           'additionalData' => {
+            'allow3DS2' => true
+           },
+           'origin' => origin,
+           'browserInfo' => browser_info,
+          'reference' => attempt_token,
+          'paymentMethod' => payment_method.to_enum.to_h,
           'merchantAccount' => merchant_account,
-          'metadata' => { 'attemptToken' => attempt_token }
+          'returnUrl' => return_url
         }
       )
     end
 
-    def charge_recurring_subscription(payment_token, attempt_token, payment_amount, payment_currency, subscription_id, subscriber_id, merchant_account)
+    def charge_recurring_subscription(payment_method, payment_amount, payment_currency,merchant_account, attempt_token, subscriber_id)
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
 
@@ -92,14 +111,15 @@ module AccesstypeAdyen
         requested_path,
         fetch_route[:api],
         {
-          'amount' => { 'currency' => payment_currency, 'amount' => payment_amount },
-          'paymentMethod' => { 'type' => 'scheme', 'storedPaymentMethodId' => payment_token },
-          'reference' => subscription_id,
-          'shopperInteraction' => 'ContAuth',
+          'amount' => { 'currency' => payment_currency, 'value' => payment_amount },
+          'paymentMethod' => payment_method.to_enum.to_h,
+          'reference' => attempt_token,
+          'shopperInteraction' => 'Ecommerce',
           'recurringProcessingModel' => 'Subscription',
           'shopperReference' => subscriber_id,
           'merchantAccount' => merchant_account,
-          'metadata' => { 'attemptToken' => attempt_token }
+          'metadata' => { 'attemptToken' => attempt_token },
+          'returnUrl' => "http://localhost:7000/api/access/v1/handle-payment-gateway-response?attempt_token=#{attempt_token}"
         }
       )
     end
@@ -146,17 +166,19 @@ module AccesstypeAdyen
     # page to complete the payment.
     #
     # See more: https://docs.adyen.com/api-explorer/#/CheckoutService/v67/post/payments/details
-    def payment_details(state_data, payment_data)
+    def payment_details(details, payment_data)
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
-
+      
+      payload = {
+        'details' =>  details
+      }
+      payload.merge({'paymentData' => payment_data}) if !payment_data.nil? 
+  
       client.post(
         requested_path,
         fetch_route[:api],
-        {
-          'details' => { 'threeDSResult' => state_data },
-          'paymentData' => payment_data
-        }
+        payload   
       )
     end
 
@@ -171,3 +193,5 @@ module AccesstypeAdyen
     end
   end
 end
+
+

@@ -20,7 +20,7 @@ module AccesstypeAdyen
           'X-Api-Key' => api_key.to_s,
           'Content-Type' => 'application/json'
         },
-        body: options
+        body: options.to_json
       )
 
       return response unless response.code >= 500

@@ -176,7 +176,8 @@ module AccesstypeAdyen
             amount_currency: !response['amount'].nil? ? response['amount']['currency'].to_s : nil,
             amount_cents: !response['amount'].nil? ? response['amount']['value'] : nil,
             metadata: !response['action'].nil? ? response['action']['paymentData'] : nil,
-            status: response['resultCode']
+            status: response['resultCode'],
+            client_payload: response
           )
         else
           error_response(

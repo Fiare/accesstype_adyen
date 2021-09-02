@@ -3,7 +3,7 @@
 module AccesstypeAdyen
   # Define a common response structure which will be given to Accesstype.
   class PaymentResult
-    attr_accessor :success, :code, :message, :payload, :payment_token, :amount_currency, :amount_cents, :status, :transaction_id, :payment_type, :international, :skip_invoice, :metadata, :external_payment_id, :authorize_uri, :payment_gateway_fee, :payment_gateway_fee_currency, :external_refund_id, :external_capture_id
+    attr_accessor :success, :code, :message, :payload, :payment_token, :amount_currency, :amount_cents, :status, :transaction_id, :payment_type, :international, :skip_invoice, :metadata, :external_payment_id, :authorize_uri, :payment_gateway_fee, :payment_gateway_fee_currency, :external_refund_id, :external_capture_id,:client_payload
 
     def self.error(payment_type, params = {})
       result = PaymentResult.new
@@ -35,6 +35,7 @@ module AccesstypeAdyen
       result.external_capture_id = params[:external_capture_id]
       result.payment_gateway_fee_currency = params[:payment_gateway_fee_currency]
       result.external_refund_id = params[:external_refund_id]
+      result.client_payload = params[:client_payload]
 
       result
     end
