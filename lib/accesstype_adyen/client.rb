@@ -88,7 +88,7 @@ module AccesstypeAdyen
         'returnUrl' => return_url
       }
 
-      if payment_method.to_enum.to_h.eql?(:scheme)
+      if payment_method[:type].eql?('scheme')
         options.merge!(
           'channel' => 'Web',
           'additionalData' => {
@@ -128,10 +128,10 @@ module AccesstypeAdyen
         'recurringProcessingModel' => 'Subscription',
         'shopperReference' => subscriber_id,
         'merchantAccount' => merchant_account,
-        'returnUrl' => "http://localhost:7000/api/access/v1/handle-payment-gateway-response?attempt_token=#{attempt_token}"
+        'returnUrl' => return_url
       }
 
-      if payment_method.to_enum.to_h.eql?(:scheme)
+      if payment_method[:type].eql?('scheme')
         options.merge!(
           'channel' => 'Web',
           'additionalData' => {
