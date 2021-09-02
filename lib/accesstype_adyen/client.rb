@@ -201,7 +201,7 @@ module AccesstypeAdyen
       payload = {
         'details' => details
       }
-      payload.merge({ 'paymentData' => payment_data }) unless payment_data.nil?
+      payload.merge!({ 'paymentData' => payment_data }) unless payment_data.nil?
 
       client.post(
         requested_path,
