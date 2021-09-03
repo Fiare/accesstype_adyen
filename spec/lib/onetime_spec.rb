@@ -255,7 +255,6 @@ describe AccesstypeAdyen::Onetime do
         )
 
       payment = {
-        payment_token: 'some_payment_token',
         amount_cents: 2700,
         amount_currency: 'EUR',
         additional_data:
@@ -270,7 +269,7 @@ describe AccesstypeAdyen::Onetime do
       expect(result.success).to eq true
       expect(result.amount_currency).to eq 'EUR'
       expect(result.amount_cents).to eq 2700
-      expect(result.payment_token).to eq 'some_payment_token'
+      expect(result.payment_token).to eq '88154795347618C'
       expect(result.external_payment_id).to eq '88154795347618C'
     end
 

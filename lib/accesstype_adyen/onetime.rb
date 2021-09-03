@@ -46,7 +46,7 @@ module AccesstypeAdyen
           if VALID_STATUSES.include?(response['resultCode'].to_s)
             PaymentResult.success(
               AccesstypeAdyen::PAYMENT_GATEWAY,
-              payment_token: payment[:payment_token],
+              payment_token: response['pspReference'],
               amount_currency: payment[:amount_currency].to_s,
               amount_cents: payment[:amount_cents],
               external_payment_id: response['pspReference'],
