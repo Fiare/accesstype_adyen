@@ -160,12 +160,12 @@ module AccesstypeAdyen
     def capture(payment:)
       response = Api.capture_payment(
         credentials,
-        payment[:payment_token],
-        payment[:amount_cents],
-        payment[:amount_currency].to_s
+        payment["payment_token"],
+        payment["amount_cents"],
+        payment["amount_currency"].to_s
       )
 
-      if response.code.to_i == 200
+      if response.code.to_i == 201
         payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
         PaymentResult.success(
           AccesstypeAdyen::PAYMENT_TYPE_RECURRING,
@@ -174,6 +174,7 @@ module AccesstypeAdyen
           payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
           amount_currency: response['amount']['currency'].to_s,
           amount_cents: response['amount']['value'],
+          external_capture_id: response['pspReference'],
           status: response['status']
         )
       else
