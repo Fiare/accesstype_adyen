@@ -58,7 +58,7 @@ module AccesstypeAdyen
         requested_path,
         fetch_route[:api],
         {
-          'amount' => { 'currency' => refund_currency, 'amount' => refund_amount },
+          'amount' => { 'currency' => refund_currency, 'value' => refund_amount },
           'merchantAccount' => merchant_account
         }
       )
