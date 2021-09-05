@@ -123,7 +123,7 @@ module AccesstypeAdyen
       if response.code == 201
         PaymentResult.success(
           AccesstypeAdyen::PAYMENT_GATEWAY,
-          external_refund_id: response['paymentPspReference'],
+          external_refund_id: response['pspReference'],
           amount_currency: response['amount']['currency'].to_s,
           amount_cents: response['amount']['value'],
           status: response['status']
