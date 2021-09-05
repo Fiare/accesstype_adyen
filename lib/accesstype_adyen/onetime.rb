@@ -84,6 +84,7 @@ module AccesstypeAdyen
     # Expected params: payment object with token, amount and currency
     # Returns: Payment Result object
     def capture(payment:)
+      binding.pry
       response = Api.capture_payment(
         credentials,
         payment[:payment_token],

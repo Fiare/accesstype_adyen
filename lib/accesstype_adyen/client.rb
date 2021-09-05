@@ -9,6 +9,7 @@ module AccesstypeAdyen
     ROUTES = [
       { name: 'capture_payment', path: '/v67/payments/:payment_id/captures', api: :checkout },
       { name: 'refund_payment', path: '/v67/payments/:payment_id/refunds', api: :checkout },
+      { name: 'recurring_payment', path: '/v67/payments', api: :checkout },
       { name: 'charge_recurring_subscription', path: '/v67/payments', api: :checkout },
       { name: 'cancel_recurring_subscription', path: '/Recurring/v49/disable', api: :pal },
       { name: 'validate_credentials', path: '/v67/paymentMethods', api: :checkout },
@@ -35,8 +36,11 @@ module AccesstypeAdyen
 
     # Used for capturing payment from Adyen PG.
     def capture_payment(payment_id, currency, amount, merchant_account)
+      puts "payment_id #{payment_id}"
       fetch_route = find_route(__method__.to_s)
-      requested_path = fetch_route[:path].gsub(':payment_id', payment_id)
+
+      requested_path = "/v67/payments/#{payment_id}/captures"
+      # fetch_route[:path].gsub(':payment_id', '145')
 
       client.post(
         requested_path,
@@ -128,19 +132,10 @@ module AccesstypeAdyen
         'recurringProcessingModel' => 'Subscription',
         'shopperReference' => subscriber_id,
         'merchantAccount' => merchant_account,
-        'returnUrl' => return_url
+        'returnUrl' => return_url,
+        'storePaymentMethod' => true,
+        'countryCode' => 'AT'
       }
-
-      if payment_method[:type].eql?('scheme')
-        options.merge!(
-          'channel' => 'Web',
-          'additionalData' => {
-            'allow3DS2' => true
-          },
-          'origin' => origin,
-          'browserInfo' => browser_info
-        )
-      end
 
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
@@ -157,7 +152,7 @@ module AccesstypeAdyen
     # will be disabled, which includes all recurring details.
     #
     # See more: https://docs.adyen.com/api-explorer/#/Recurring/latest/post/disable__section_reqParams
-    def cancel_recurring_subscription(subscriber_id, merchant_account)
+    def cancel_recurring_subscription(merchant_account, recurring_detail_reference,subscriber_id)
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
 
@@ -166,7 +161,8 @@ module AccesstypeAdyen
         fetch_route[:api],
         {
           'contract' => 'RECURRING',
-          'shopperReference' => subscriber_id,
+          'recurringDetailReference' => recurring_detail_reference,
+          'shopperReference' => subscriber_id,  
           'merchantAccount' => merchant_account
         }
       )
@@ -210,6 +206,29 @@ module AccesstypeAdyen
       )
     end
 
+
+    def recurring_payment(merchant_account,payment_amount,payment_currency,subscriber_id,attempt_token, storedPaymentId)
+      fetch_route = find_route(__method__.to_s)
+      requested_path = fetch_route[:path]
+
+      options = {
+        'amount' => { 'currency' => payment_currency, 'value' => payment_amount },
+        'reference' => attempt_token,
+        'paymentMethod' =>  {"type":"scheme", "storedPaymentMethodId": storedPaymentId },
+        'shopperInteraction' => 'ContAuth',
+        'recurringProcessingModel' => 'Subscription',
+        'shopperReference' => subscriber_id,
+        'merchantAccount' => merchant_account,
+      }
+
+
+      client.post(
+        requested_path,
+        fetch_route[:api],
+        options
+      )
+    end
+
     private
 
     def client
@@ -221,5 +240,3 @@ module AccesstypeAdyen
     end
   end
 end
-
-

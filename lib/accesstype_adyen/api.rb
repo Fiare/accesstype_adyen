@@ -67,18 +67,19 @@ module AccesstypeAdyen
           payload[:subscription][:additional_data][:return_url],
           payload[:subscription][:additional_data][:dropin_state_data][:browserInfo] ? payload[:subscription][:additional_data][:dropin_state_data][:browserInfo].to_enum.to_h : nil,
           payload[:subscription][:additional_data][:origin],
-          subscriber[:id]
+          subscriber["id"]
         )
       end
 
       # Used for cancelling the subscription.
-      def cancel_recurring_subscription(credentials, subscriber_id)
+      def cancel_recurring_subscription(credentials,payment)
         Client.new(
           AccesstypeAdyen::CONFIG[credentials[:environment].to_sym],
           credentials
         ).cancel_recurring_subscription(
-          subscriber_id,
-          credentials[:merchant_account]
+          credentials[:merchant_account],
+          payment[:payment_token],
+          payment[:subscriber_id]
         )
       end
 
@@ -98,6 +99,20 @@ module AccesstypeAdyen
           AccesstypeAdyen::CONFIG[credentials[:environment].to_sym],
           credentials
         ).payment_details(details, payment_data)
+      end
+
+      def recurring_final_payment(credentials,payment)
+        Client.new(
+          AccesstypeAdyen::CONFIG[credentials[:environment].to_sym],
+          credentials
+        ).recurring_payment(
+          credentials[:merchant_account], 
+          payment[:amount_cents],
+          payment[:amount_currency],
+          payment[:subscriber_id],
+          payment[:attempt_token],
+          payment[:additional_data][:payment_data]
+        )
       end
     end
   end
