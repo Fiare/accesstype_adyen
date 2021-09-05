@@ -113,17 +113,14 @@ module AccesstypeAdyen
     # Expected params: invoice object, amount
     # Returns: Payment Result object
     def refund_payment(invoice:, amount:)
-      binding.pry
       response = Api.refund_payment(
         credentials,
-        invoice[:external_payment_id],
-        invoice[:amount_currency],
+        invoice["external_payment_id"],
+        invoice["amount_currency"],
         amount
       )
 
-      binding.pry
-
-      if response.code == 200
+      if response.code == 201
         PaymentResult.success(
           AccesstypeAdyen::PAYMENT_GATEWAY,
           external_refund_id: response['paymentPspReference'],
