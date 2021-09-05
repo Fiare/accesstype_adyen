@@ -131,8 +131,7 @@ module AccesstypeAdyen
         'shopperReference' => subscriber_id,
         'merchantAccount' => merchant_account,
         'returnUrl' => return_url,
-        'storePaymentMethod' => true,
-        'countryCode' => 'AT'
+        'storePaymentMethod' => true
       }
 
       fetch_route = find_route(__method__.to_s)
