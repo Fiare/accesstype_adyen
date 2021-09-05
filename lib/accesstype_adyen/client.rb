@@ -36,7 +36,6 @@ module AccesstypeAdyen
 
     # Used for capturing payment from Adyen PG.
     def capture_payment(payment_id, currency, amount, merchant_account)
-      binding.pry
       fetch_route = find_route(__method__.to_s)
 
       requested_path = fetch_route[:path].gsub(':payment_id', payment_id)

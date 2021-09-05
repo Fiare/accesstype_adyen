@@ -84,7 +84,6 @@ module AccesstypeAdyen
     # Expected params: payment object with token, amount and currency
     # Returns: Payment Result object
     def capture(payment:)
-      binding.pry
       response = Api.capture_payment(
         credentials,
         payment["payment_token"],
@@ -93,7 +92,6 @@ module AccesstypeAdyen
       )
 
       if response.code.to_i == 201
-        binding.pry
         payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
         PaymentResult.success(
           AccesstypeAdyen::PAYMENT_GATEWAY,

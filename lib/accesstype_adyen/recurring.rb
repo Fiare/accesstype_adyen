@@ -29,9 +29,9 @@ module AccesstypeAdyen
     end
 
 
-    # def capture?
-    #   true
-    # end
+    def capture?
+      true
+    end
 
     # @note For Adyen, this method is replaced by the initiate_charge method
     #
@@ -158,19 +158,17 @@ module AccesstypeAdyen
     # Expected params: payment object with token, amount and currency
     # Returns: Payment Result object
     def capture(payment:)
-      binding.pry
       response = Api.capture_payment(
         credentials,
         payment[:payment_token],
         payment[:amount_cents],
         payment[:amount_currency].to_s
       )
-      binding.pry
 
       if response.code.to_i == 200
         payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
         PaymentResult.success(
-          AccesstypeAdyen::PAYMENT_GATEWAY,
+          AccesstypeAdyen::PAYMENT_TYPE_RECURRING,
           payment_token: payment[:payment_token],
           payment_gateway_fee: !payment_fee.nil? ? payment_fee['amount']['value'] : nil,
           payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
