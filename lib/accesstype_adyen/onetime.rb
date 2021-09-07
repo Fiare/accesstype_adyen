@@ -96,8 +96,8 @@ module AccesstypeAdyen
         PaymentResult.success(
           AccesstypeAdyen::PAYMENT_GATEWAY,
           payment_token: payment[:payment_token],
-          payment_gateway_fee: !payment_fee.nil? ? payment_fee['amount']['value'] : nil,
-          payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
+          payment_gateway_fee: 0,
+          payment_gateway_fee_currency: response['amount']['currency'],
           amount_currency: response['amount']['currency'].to_s,
           amount_cents: response['amount']['value'],
           external_capture_id: response['pspReference'],
