@@ -87,7 +87,6 @@ module AccesstypeAdyen
     # Expected params: payment object with payment_token
     # Returns: Payment result object
     def after_charge(payment:)
-      binding.pry
       if !payment[:additional_data].nil? && !payment.dig(:additional_data, :payment_data).nil? && payment.dig(:additional_data, :is_payments_required)
 
         response = Api.recurring_final_payment(credentials, payment)

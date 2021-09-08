@@ -129,7 +129,7 @@ module AccesstypeAdyen
         'shopperReference' => subscriber_id,
         'merchantAccount' => merchant_account,
         'returnUrl' => return_url,
-        'storePaymentMethod' => true,
+        'storePaymentMethod' => true
       }
 
       # only if we remove  3ds options recurring detail reference is created
