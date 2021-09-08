@@ -112,8 +112,6 @@ module AccesstypeAdyen
 
     def charge_recurring_subscription(payment_method, payment_amount, payment_currency, merchant_account, attempt_token, return_url, browser_info, origin, subscriber_id)
       # These parameters are only required for native 3ds2 transactions.
-      # Please add it only when paymentMethod type is scheme ie cards
-
       # 'channel' => 'Web',
       # 'additionalData' => {
       #  'allow3DS2' => true
@@ -131,8 +129,21 @@ module AccesstypeAdyen
         'shopperReference' => subscriber_id,
         'merchantAccount' => merchant_account,
         'returnUrl' => return_url,
-        'storePaymentMethod' => true
+        'storePaymentMethod' => true,
       }
+
+      # only if we remove  3ds options recurring detail reference is created
+
+      # if payment_method[:type].eql?('scheme')
+      #   options.merge!(
+      #     'channel' => 'Web',
+      #     'additionalData' => {
+      #       'allow3DS2' => true
+      #     },
+      #     'origin' => origin,
+      #     'browserInfo' => browser_info
+      #   )
+      # end
 
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
@@ -211,7 +222,7 @@ module AccesstypeAdyen
       options = {
         'amount' => { 'currency' => payment_currency, 'value' => payment_amount },
         'reference' => attempt_token,
-        'paymentMethod' =>  {"type":"scheme", "storedPaymentMethodId": storedPaymentId },
+        'paymentMethod' =>  { 'type': 'scheme', 'storedPaymentMethodId': storedPaymentId },
         'shopperInteraction' => 'ContAuth',
         'recurringProcessingModel' => 'Subscription',
         'shopperReference' => subscriber_id,
