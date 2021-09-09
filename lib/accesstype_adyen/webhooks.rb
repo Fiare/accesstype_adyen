@@ -52,6 +52,7 @@ module AccesstypeAdyen
     def webhook_event_type_mapping
       {
         'AUTHORISATION' => 'one_time_subscription_charged',
+        'REFUND'=> 'subscription_refund_created'
         # 'subscription.charged' => 'recurring_subscription_charged',
         # 'subscription.halted' => 'recurring_subscription_cancelled',
         # 'subscription.cancelled' => 'recurring_subscription_cancelled'
@@ -62,7 +63,7 @@ module AccesstypeAdyen
     # to identify all the required fields for processing
     # Should return a map with at least the mandatory keys as mentioned below
     def webhook_event_details(payload:)
-      notification_item = payload.dig(:notificationItems, 0)
+      notification_item = payload.dig(:notificationItems, 0) || payload.dig(:payload, :notificationItems, 0)
 
       {
         attempt_token: notification_item.dig(:NotificationRequestItem, :merchantReference) || notification_item.dig(:NotificationRequestItem, :additionalData, 'metadata.attemptToken'),
@@ -75,7 +76,9 @@ module AccesstypeAdyen
         event: notification_item.dig(:NotificationRequestItem, :eventCode),
         external_subscription_id: notification_item.dig(:NotificationRequestItem, :additionalData, :"recurring.recurringDetailReference"),
         payment_gateway_fee_cents: 0,
-        payment_gateway_fee_currency: notification_item.dig(:NotificationRequestItem, :amount, :currency)
+        payment_gateway_fee_currency: notification_item.dig(:NotificationRequestItem, :amount, :currency),
+        external_refund_id: notification_item.dig(:NotificationRequestItem, :pspReference),
+        external_original_reference_id: notification_item.dig(:NotificationRequestItem, :originalReference)
       }
 
 
