@@ -83,6 +83,16 @@ module AccesstypeAdyen
         )
       end
 
+      def recurring_detail_reference(credentials,subscriber_id)
+        Client.new(
+          AccesstypeAdyen::CONFIG[credentials[:environment].to_sym],
+          credentials
+        ).recurring_detail_reference(
+          credentials[:merchant_account],
+          subscriber_id         
+        )
+      end
+
       # Used for testing that the credentials and merchantAccount are valid.
       def validate_credentials(credentials)
         Client.new(

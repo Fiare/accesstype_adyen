@@ -87,9 +87,12 @@ module AccesstypeAdyen
     # Expected params: payment object with payment_token
     # Returns: Payment result object
     def after_charge(payment:)
-      if !payment[:additional_data].nil? && !payment.dig(:additional_data, :payment_data).nil? && payment.dig(:additional_data, :is_payments_required)
+      if !payment[:additional_data].nil? && payment.dig(:additional_data, :is_payment_details_required).to_s.downcase == 'true'
 
-        response = Api.recurring_final_payment(credentials, payment)
+        state_data = payment.dig(:additional_data, :details)
+        payment_data = payment.dig(:additional_data, :payment_data)
+
+        response = Api.payment_details(credentials, state_data, payment_data)
 
         if response.code.to_i == 200
           if VALID_STATUSES.include?(response['resultCode'].to_s)
@@ -179,6 +182,29 @@ module AccesstypeAdyen
         )
       else
         error_response(response['errorCode'], response['message'], response['status'], payment[:payment_token])
+      end
+    end
+
+    def recurring_detail_reference(subscriber_id)
+
+      response = Api.recurring_detail_reference(
+        credentials,
+        subscriber_id
+      )
+
+      if response.code.to_i == 200
+
+        PaymentResult.success(
+          AccesstypeAdyen::PAYMENT_TYPE_RECURRING,
+          payload: response
+        )
+
+      else
+        error_response(
+          response['errorCode'],
+          response['message'],
+          response['status'],
+        )
       end
     end
 

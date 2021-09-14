@@ -8,6 +8,7 @@ module AccesstypeAdyen
     # Define routes which will be used in this class
     ROUTES = [
       { name: 'capture_payment', path: '/v67/payments/:payment_id/captures', api: :checkout },
+      { name: 'recurring_detail_reference', path: '/Recurring/v49/listRecurringDetails', api: :pal},
       { name: 'refund_payment', path: '/v67/payments/:payment_id/refunds', api: :checkout },
       { name: 'recurring_payment', path: '/v67/payments', api: :checkout },
       { name: 'charge_recurring_subscription', path: '/v67/payments', api: :checkout },
@@ -132,18 +133,16 @@ module AccesstypeAdyen
         'storePaymentMethod' => true
       }
 
-      # only if we remove  3ds options recurring detail reference is created
-
-      # if payment_method[:type].eql?('scheme')
-      #   options.merge!(
-      #     'channel' => 'Web',
-      #     'additionalData' => {
-      #       'allow3DS2' => true
-      #     },
-      #     'origin' => origin,
-      #     'browserInfo' => browser_info
-      #   )
-      # end
+      if payment_method[:type].eql?('scheme')
+        options.merge!(
+          'channel' => 'Web',
+          'additionalData' => {
+            'allow3DS2' => true
+          },
+          'origin' => origin,
+          'browserInfo' => browser_info
+        )
+      end
 
       fetch_route = find_route(__method__.to_s)
       requested_path = fetch_route[:path]
@@ -172,6 +171,23 @@ module AccesstypeAdyen
           'recurringDetailReference' => recurring_detail_reference,
           'shopperReference' => subscriber_id,  
           'merchantAccount' => merchant_account
+        }
+      )
+    end
+
+    def recurring_detail_reference(merchant_account,subscriber_id)
+      fetch_route = find_route(__method__.to_s)
+      requested_path = fetch_route[:path]
+
+      client.post(
+        requested_path,
+        fetch_route[:api],
+        {
+          "recurring" => {
+            "contract" => "RECURRING"
+          },
+          "shopperReference" => subscriber_id,
+          "merchantAccount" => merchant_account
         }
       )
     end
