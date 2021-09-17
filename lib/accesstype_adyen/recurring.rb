@@ -28,7 +28,6 @@ module AccesstypeAdyen
       false
     end
 
-
     def capture?
       true
     end
@@ -87,7 +86,8 @@ module AccesstypeAdyen
     # Expected params: payment object with payment_token
     # Returns: Payment result object
     def after_charge(payment:)
-      if !payment[:additional_data].nil? && payment.dig(:additional_data, :is_payment_details_required).to_s.downcase == 'true'
+      if !payment[:additional_data].nil? && payment.dig(:additional_data,
+                                                        :is_payment_details_required).to_s.downcase == 'true'
 
         state_data = payment.dig(:additional_data, :details)
         payment_data = payment.dig(:additional_data, :payment_data)
@@ -156,16 +156,16 @@ module AccesstypeAdyen
       end
     end
 
-      # Used for capturing payment from Adyen.
+    # Used for capturing payment from Adyen.
     #
     # Expected params: payment object with token, amount and currency
     # Returns: Payment Result object
     def capture(payment:)
       response = Api.capture_payment(
         credentials,
-        payment["payment_token"],
-        payment["amount_cents"],
-        payment["amount_currency"].to_s
+        payment['payment_token'],
+        payment['amount_cents'],
+        payment['amount_currency'].to_s
       )
 
       if response.code.to_i == 201
@@ -186,28 +186,33 @@ module AccesstypeAdyen
     end
 
     def recurring_detail_reference(subscriber_id)
-
       response = Api.recurring_detail_reference(
         credentials,
         subscriber_id
       )
 
-      if response.code.to_i == 200
+      if response.code.to_i == 200 && !response['details'].nil?
 
         PaymentResult.success(
           AccesstypeAdyen::PAYMENT_TYPE_RECURRING,
           payload: response
         )
 
+      elsif response.code.to_i == 200
+        error_response(
+          nil,
+          'Subscription already cancelled',
+          'CANCELLED'
+        )
+
       else
         error_response(
           response['errorCode'],
           response['message'],
-          response['status'],
+          response['status']
         )
       end
     end
-
 
     # This method will initiate the payment and return either
     # "Authorised" or "RedirectShopper" as a status, depending
@@ -218,7 +223,6 @@ module AccesstypeAdyen
     # Expected params: payload, subscription_plan, subscriber
     # Returns: Payment result object
     def initiate_charge(payload:, subscription_plan:, subscriber:)
-
       response = Api.charge_recurring_subscription(
         credentials,
         payload,
