@@ -36,7 +36,8 @@ module AccesstypeAdyen
     # Expected params: payment object with payment_token
     # Returns: Payment Result object
     def after_charge(payment:)
-      if !payment[:additional_data].nil? && payment.dig(:additional_data, :is_payment_details_required).to_s.downcase == 'true'
+      if !payment[:additional_data].nil? && payment.dig(:additional_data,
+                                                        :is_payment_details_required).to_s.downcase == 'true'
         state_data = payment.dig(:additional_data, :details)
         payment_data = payment.dig(:additional_data, :payment_data)
 
@@ -86,9 +87,9 @@ module AccesstypeAdyen
     def capture(payment:)
       response = Api.capture_payment(
         credentials,
-        payment["payment_token"],
-        payment["amount_cents"],
-        payment["amount_currency"].to_s
+        payment['payment_token'],
+        payment['amount_cents'],
+        payment['amount_currency'].to_s
       )
 
       if response.code.to_i == 201
@@ -115,8 +116,8 @@ module AccesstypeAdyen
     def refund_payment(invoice:, amount:)
       response = Api.refund_payment(
         credentials,
-        invoice["external_payment_id"],
-        invoice["amount_currency"],
+        invoice['external_payment_id'],
+        invoice['amount_currency'],
         amount
       )
 

@@ -240,7 +240,7 @@ module AccesstypeAdyen
             payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
             amount_currency: !response['amount'].nil? ? response['amount']['currency'].to_s : nil,
             amount_cents: !response['amount'].nil? ? response['amount']['value'] : nil,
-            metadata: !response['additionalData'].nil? ? response['additionalData']['recurring.recurringDetailReference'] : nil,
+            metadata: !response['action'].nil? ? response['action']['paymentData'] : nil,
             status: response['resultCode'],
             client_payload: response
           )
