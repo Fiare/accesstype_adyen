@@ -111,17 +111,17 @@ module AccesstypeAdyen
         ).payment_details(details, payment_data)
       end
 
-      def recurring_final_payment(credentials,payment)
+      def recurring_payment(credentials,payment)
         Client.new(
           AccesstypeAdyen::CONFIG[credentials[:environment].to_sym],
           credentials
         ).recurring_payment(
-          credentials[:merchant_account], 
-          payment[:amount_cents],
-          payment[:amount_currency],
+          credentials[:merchant_account],
+          payment[:payment_amount],
+          payment[:payment_currency],
           payment[:subscriber_id],
           payment[:attempt_token],
-          payment[:additional_data][:payment_data]
+          payment[:storedPaymentId]
         )
       end
     end

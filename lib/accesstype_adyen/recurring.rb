@@ -265,10 +265,7 @@ module AccesstypeAdyen
     def recurring_payment(payload:)
       response = Api.recurring_payment(
         credentials,
-        payload[:payment_amount],
-        payload[:payment_currency],
-        payload[:subscriber_id],
-        payload[:storedPaymentId]
+        payload
       )
 
       if response.code.to_i == 200
