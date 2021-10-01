@@ -201,7 +201,7 @@ module AccesstypeAdyen
       elsif response.code.to_i == 200
         error_response(
           nil,
-          'Subscription already cancelled',
+          'The subscription is already cancelled on Adyen payment gateway. The status will change post this recurring cycle',
           'CANCELLED'
         )
 
