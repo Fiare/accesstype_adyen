@@ -100,3 +100,4 @@ test/version_tmp
 tmp
 
 .history
+.vscode

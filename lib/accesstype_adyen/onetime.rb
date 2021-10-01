@@ -36,7 +36,8 @@ module AccesstypeAdyen
     # Expected params: payment object with payment_token
     # Returns: Payment Result object
     def after_charge(payment:)
-      if !payment[:additional_data].nil? && payment.dig(:additional_data, :is_payment_details_required).to_s.downcase == 'true'
+      if !payment[:additional_data].nil? && payment.dig(:additional_data,
+                                                        :is_payment_details_required).to_s.downcase == 'true'
         state_data = payment.dig(:additional_data, :details)
         payment_data = payment.dig(:additional_data, :payment_data)
 
@@ -86,20 +87,21 @@ module AccesstypeAdyen
     def capture(payment:)
       response = Api.capture_payment(
         credentials,
-        payment[:payment_token],
-        payment[:amount_cents],
-        payment[:amount_currency].to_s
+        payment['payment_token'],
+        payment['amount_cents'],
+        payment['amount_currency'].to_s
       )
 
-      if response.code.to_i == 200
+      if response.code.to_i == 201
         payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
         PaymentResult.success(
           AccesstypeAdyen::PAYMENT_GATEWAY,
           payment_token: payment[:payment_token],
-          payment_gateway_fee: !payment_fee.nil? ? payment_fee['amount']['value'] : nil,
-          payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
+          payment_gateway_fee: 0,
+          payment_gateway_fee_currency: response['amount']['currency'],
           amount_currency: response['amount']['currency'].to_s,
           amount_cents: response['amount']['value'],
+          external_capture_id: response['pspReference'],
           status: response['status']
         )
       else
@@ -114,15 +116,15 @@ module AccesstypeAdyen
     def refund_payment(invoice:, amount:)
       response = Api.refund_payment(
         credentials,
-        invoice[:external_payment_id],
-        invoice[:amount_currency],
+        invoice['external_payment_id'],
+        invoice['amount_currency'],
         amount
       )
 
-      if response.code == 200
+      if response.code == 201
         PaymentResult.success(
           AccesstypeAdyen::PAYMENT_GATEWAY,
-          external_refund_id: response['paymentPspReference'],
+          external_refund_id: response['pspReference'],
           amount_currency: response['amount']['currency'].to_s,
           amount_cents: response['amount']['value'],
           status: response['status']

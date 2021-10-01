@@ -16,11 +16,14 @@ module AccesstypeAdyen
     # to authorize webhook received before processing it
     # Should return a boolean
     def webhook_request_authorized?(request:)
-      body = JSON.parse(request.body)
+      body = JSON.parse(request.raw_post)
 
       # Return false if hmac key is missing, or message is completely
       # missing notification items or has zero notification items.
-      if credentials.dig(:hmac_key).nil? || body['notificationItems'].nil? ||
+
+      return true if credentials.dig(:hmac_key).nil?
+      
+      if body['notificationItems'].nil? ||
         (!body['notificationItems'].nil? && body['notificationItems'].count.zero?)
         return false
       end
@@ -49,6 +52,7 @@ module AccesstypeAdyen
     def webhook_event_type_mapping
       {
         'AUTHORISATION' => 'one_time_subscription_charged',
+        'REFUND'=> 'subscription_refund_created'
         # 'subscription.charged' => 'recurring_subscription_charged',
         # 'subscription.halted' => 'recurring_subscription_cancelled',
         # 'subscription.cancelled' => 'recurring_subscription_cancelled'
@@ -59,21 +63,26 @@ module AccesstypeAdyen
     # to identify all the required fields for processing
     # Should return a map with at least the mandatory keys as mentioned below
     def webhook_event_details(payload:)
-      payment_fee = payload.dig(:NotificationRequestItem, :splits)&.find_all { |split| split[:type] == 'PaymentFee' }&.first
+      notification_item = payload.dig(:notificationItems, 0) || payload.dig(:payload, :notificationItems, 0)
 
       {
-        attempt_token: nil,
-        amount_currency: payload.dig(:NotificationRequestItem, :amount, :currency),
-        amount_cents: payload.dig(:NotificationRequestItem, :amount, :value),
-        status: payload.dig(:NotificationRequestItem, :success) == 'true' ? 'Success' : 'Failure',
-        external_payment_id: payload.dig(:NotificationRequestItem, :pspReference),
-        email: payload.dig(:NotificationRequestItem, :additionalData, :shopperEmail), # optional
+        attempt_token: notification_item.dig(:NotificationRequestItem, :merchantReference) || notification_item.dig(:NotificationRequestItem, :additionalData, 'metadata.attemptToken'),
+        amount_currency: notification_item.dig(:NotificationRequestItem, :amount, :currency),
+        amount_cents: notification_item.dig(:NotificationRequestItem, :amount, :value),
+        status: notification_item.dig(:NotificationRequestItem, :success) == 'true' ? 'Success' : 'Failure',
+        external_payment_id: notification_item.dig(:NotificationRequestItem, :pspReference),
+        email: notification_item.dig(:NotificationRequestItem, :additionalData, :shopperEmail), # optional
         contact: nil, # optional
-        event: payload.dig(:NotificationRequestItem, :eventCode),
-        external_subscription_id: payload.dig(:NotificationRequestItem, :additionalData, :"recurring.recurringDetailReference"),
-        payment_gateway_fee_cents: payment_fee.nil? ? nil : payment_fee[:amount][:value], # optional
-        payment_gateway_fee_currency: payment_fee.nil? ? nil : payment_fee[:amount][:currency] # optional
+        event: notification_item.dig(:NotificationRequestItem, :eventCode),
+        external_subscription_id: notification_item.dig(:NotificationRequestItem, :additionalData, :"recurring.recurringDetailReference"),
+        payment_gateway_fee_cents: 0,
+        payment_gateway_fee_currency: notification_item.dig(:NotificationRequestItem, :amount, :currency),
+        external_refund_id: notification_item.dig(:NotificationRequestItem, :pspReference),
+        external_original_reference_id: notification_item.dig(:NotificationRequestItem, :originalReference)
       }
+
+
+
     end
 
     # Optional
