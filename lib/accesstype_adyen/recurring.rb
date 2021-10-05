@@ -273,12 +273,13 @@ module AccesstypeAdyen
           payment_fee = response['splits']&.find_all { |split| split['type'] == 'PaymentFee' }&.first
           PaymentResult.success(
             AccesstypeAdyen::PAYMENT_TYPE_RECURRING,
-            payment_token: response["pspReference"],
+            payment_token: response['pspReference'],
             payment_gateway_fee: !payment_fee.nil? ? payment_fee['amount']['value'] : nil,
             payment_gateway_fee_currency: !payment_fee.nil? ? payment_fee['amount']['currency'] || response['amount']['currency'] : nil,
             amount_currency: !response['amount'].nil? ? response['amount']['currency'].to_s : nil,
             amount_cents: !response['amount'].nil? ? response['amount']['value'] : nil,
             status: response['resultCode'],
+            payload: response
           )
         else
           error_response(
